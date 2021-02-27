@@ -140,7 +140,7 @@ def AES_Encrypt(): # AES Encrypt
 def AES_Decrypt(): # AES Decrypt
 
 	if Load_file_Button['text'] == "Load File":
-		Logger('warn',"Please select a file to encrypt.")
+		Logger('warn',"Please select a file to decrypt.")
 
 	elif path.exists(LoadFile.filepath): # file exists
 		key = Key_input_decrypt.get()
