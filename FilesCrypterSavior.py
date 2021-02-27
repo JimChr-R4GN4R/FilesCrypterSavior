@@ -93,11 +93,12 @@ def Data_Encrypt(key): # Encrypt Data
 				with open('file_keys_backup.txt', 'a') as enc_file:
 
 					if '(Bts)' in key_input_label_encrypt['text']:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key: "+unpad(key,16).decode('utf-8') + " | " + "Nonce (hex): "+nonce.hex())
+						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key: "+unpad(key,16).decode('utf-8') + " | " + "Nonce (hex): " + nonce.hex() + '\n')
 					else:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key (hex): " + key.hex() + " | " + "Nonce (hex): "+nonce.hex() + '\n')
+						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key (hex): " + key.hex() + " | " + "Nonce (hex): " + nonce.hex() + '\n')
 
 			Logger('info',"Encryption Finished.")
+			Load_file_Button['text'] = "Load File"
 			
 		except ValueError:
 			Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
@@ -178,6 +179,7 @@ def AES_Decrypt(): # AES Decrypt
 					dec_file.close()
 					os.remove(LoadFile.filepath) # Delete encrypted file and backup_keys
 					Logger('info',"Decryption Finished.")
+					Load_file_Button['text'] = "Load File"
 
 					try: # If key and nonce are saved in database, then after decryption, delete specific line
 						with open('file_keys_backup.txt','r') as f:
