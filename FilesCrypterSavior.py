@@ -207,20 +207,21 @@ def LoadFile():
 
 	Load_filename_addr = filedialog.askopenfilename(title="Select A File", filetypes=[("All Files", "*.*")] ) # import file
 
-	LoadFile.addr_filename, LoadFile.name_filename = os.path.split(Load_filename_addr) # address of directories | filename.*
+	if Load_filename_addr:
+		LoadFile.addr_filename, LoadFile.name_filename = os.path.split(Load_filename_addr) # address of directories | filename.*
 
-	LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
-
-
-	LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename)
+		LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
 
 
-	LoadFile.data = open(LoadFile.full_filename_path, 'rb').read() # import data from file.txt
+		LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename)
 
-	if len(LoadFile.full_filename_path) > 47:
-		LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
 
-	Load_file_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
+		LoadFile.data = open(LoadFile.full_filename_path, 'rb').read() # import data from file.txt
+
+		if len(LoadFile.full_filename_path) > 47:
+			LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
+
+		Load_file_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
 
 def ChangeKeyGenBits(event):
