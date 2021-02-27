@@ -15,3 +15,7 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt data 
 
 ## Presentation
 [Presentation Video](https://www.youtube.com/watch?v=K3w5Q58m8UA)
+
+
+## To-Do
+- [ ] Add `Quick Decrypt Button` that checks if the file you want to decrypt exists in database, so it gets key and nonce from there.
