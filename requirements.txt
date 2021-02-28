@@ -1,2 +1,4 @@
+requests==2.18.4
+Pillow==8.1.0
 pycryptodome==3.10.1
 pyperclip==1.8.2
