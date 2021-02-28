@@ -24,8 +24,10 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt data 
 ## To-Do List
 - [X] ~Add `Auto fill Key&Nonce` that checks if the file you want to decrypt exists in database, so it gets key and nonce and fills them in their input automatically.~
 
+
+- [X] ~Add `Update Checker` option.~
+
 - [ ] Add `BKP` (Basic Key Protector) system which means that user enters a key which he wants and database will be encrypted/decrypted by this key and files' keys and nonces will be generated automatically, so user has just to know only one key to encrypt/decrypt his files.
 
 - [ ] When selecting a folder instead of file, zip it and then encrypt it
 
-- [X] ~Add `Update Checker` option.~
