@@ -15,6 +15,40 @@ import hashlib
 ###--- Methods ---###
 
 
+def UpdateCheck():
+	import requests
+	
+	Logger('info',"Checking for new version...")
+
+	try:
+		#last_version = int( ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/.version").text ).replace('.','') )
+		text = requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')
+		version_found = False
+		for line in text:
+			if 'FCS_Version_TextPointer' in line:
+				version_found = True
+				last_version = int( line.split(' ')[2].replace("'","").replace('.','')[1:] )
+				cur_version = int( FCS_Version[1:].replace('.','') )
+
+				if last_version > cur_version:
+					Logger('info',"There is a newer version! Please update FCS.")
+				else:
+					Logger('info',"You are up to date.")
+				break
+
+		if not version_found:
+			Logger('error',"[UC-0] Something is wrong. Please check back later or contact with R4GN4R.")
+
+	except requests.exceptions.RequestException:
+		Logger('error',"[UC-1] Please check your internet connection.")
+	except requests.exceptions.HTTPError:
+		Logger('error',"[UC-2] Http Error.")
+	except requests.exceptions.ConnectionError:
+		Logger('error',"[UC-3] Error Connecting.")
+	except requests.exceptions.Timeout:
+		Logger('error',"[UC-4] Timeout Error.")   
+
+
 def Logger(mtype, message):
 	Logging_window.configure(state='normal') # Enable Logging window to add messages
 	if mtype == 'warn':
@@ -243,8 +277,10 @@ def LoadFile():
 
 def QuickDecryptChecker(): # Check if encrypted file is in database
 
-	file_hash = hashlib.sha256(LoadFile.data).hexdigest()
+	
 	if path.exists('file_keys_backup.txt'):
+		file_hash = hashlib.sha256(LoadFile.data).hexdigest()
+
 		with open('file_keys_backup.txt','r') as f:
 			for line in f.readlines():
 				if file_hash in line:
@@ -262,8 +298,12 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 					key_input_decrypt.insert(0,key) # fill decrypt key input with key value
 					Nonce_input_decrypt.delete(0,END) # clear nonce input
 					Nonce_input_decrypt.insert(0,nonce) # fill nonce input with nonce value
+					break
 
 
+
+
+	
 
 
 
@@ -272,7 +312,7 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 ###___ Methods ___###
 
 
-FCS_Version = 'V1.1'
+FCS_Version = 'V1.2' # Current FCS version - FCS_Version_TextPointer
 
 gui = Tk(className='FilesCrypterSavior ' + FCS_Version + '.')
 gui.geometry("900x460")
@@ -291,6 +331,10 @@ LoadFile.filepath = "-" # Default filepath which does not exist
 
 menubar = Menu(gui)
 view_menu = Menu(menubar)
+
+###--- Option 0 ---###
+view_menu.add_command(label="Check for updates", command=UpdateCheck)
+###___ Option 0 ___###
 
 ###--- Option 1 ---###
 Delete_original_file_checkbox_value = IntVar(value=1)
