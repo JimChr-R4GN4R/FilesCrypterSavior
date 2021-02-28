@@ -10,7 +10,7 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import AES
 import logging
 import pyperclip
-
+import hashlib
 
 ###--- Methods ---###
 
@@ -40,6 +40,19 @@ def KeyRandomGenerator():
 	Logger('info',"Key has been copied in your clickboard.")
 
 
+def ChangeKeyGenBits(event):
+
+	if '128bits' in AES_encrypt_random_key_generator_button['text']:
+		AES_encrypt_random_key_generator_button['text'] = 'Generate 192bits Key (Hex)'
+		ChangeKeyGenBits.keybytes = 192//8
+	elif '192bits' in AES_encrypt_random_key_generator_button['text']:
+		AES_encrypt_random_key_generator_button['text'] = 'Generate 256bits Key (Hex)'
+		ChangeKeyGenBits.keybytes = 256//8
+	else:
+		AES_encrypt_random_key_generator_button['text'] = 'Generate 128bits Key (Hex)'
+		ChangeKeyGenBits.keybytes = 128//8
+
+
 def EncryptKeyBytesHexFormat(event=None):
 	if "Hex" in key_input_label_encrypt['text']:
 		if len(key_input_encrypt.get()) > 32:
@@ -59,16 +72,16 @@ def EncryptKeyBytesHexFormat(event=None):
 
 def DecryptKeyBytesHexFormat(event=None):
 	if "Hex" in key_input_label_decrypt['text']:
-		if len(Key_input_decrypt.get()) > 32:
-			Key_input_decrypt.delete(32,END)
+		if len(key_input_decrypt.get()) > 32:
+			key_input_decrypt.delete(32,END)
 			messagebox.showerror("Key's Length Error", "This key hex value should not be more than 32 bytes.\nLength has been fixed")
 			key_input_label_decrypt['text'] = "Key (Bts):"
 		else:
 			key_input_label_decrypt['text'] = "Key (Bts):"
 	else:
-		if len(Key_input_decrypt.get()) > 32:
+		if len(key_input_decrypt.get()) > 32:
 			messagebox.showerror("Key's Length Error", "Your key should not be more than 32 bytes.\nLength has been fixed")
-			Key_input_decrypt.delete(32,END)
+			key_input_decrypt.delete(32,END)
 			key_input_label_decrypt['text'] = "Key (Hex):"
 		else:
 			key_input_label_decrypt['text'] = "Key (Hex):"
@@ -89,20 +102,21 @@ def Data_Encrypt(key): # Encrypt Data
 			if Delete_original_file_checkbox_value.get():
 				os.remove(LoadFile.filepath) # delete original file
 
+			enc_file_hash = hashlib.sha256(enc_bytes).hexdigest()
+
 			if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
 				with open('file_keys_backup.txt', 'a') as enc_file:
 
 					if '(Bts)' in key_input_label_encrypt['text']:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key: "+unpad(key,16).decode('utf-8') + " | " + "Nonce (hex): " + nonce.hex() + '\n')
+						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + " | Key (hex): " + key.hex() + " | " + "Nonce (hex): " + nonce.hex() + '\n')
+						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 
 			Logger('info',"Encryption Finished.")
 			Load_file_Button['text'] = "Load File"
 			
 		except ValueError:
 			Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
-		
 
 
 def AES_Encrypt(): # AES Encrypt
@@ -143,7 +157,7 @@ def AES_Decrypt(): # AES Decrypt
 		Logger('warn',"Please select a file to decrypt.")
 
 	elif path.exists(LoadFile.filepath): # file exists
-		key = Key_input_decrypt.get()
+		key = key_input_decrypt.get()
 		nonce = Nonce_input_decrypt.get()
 
 		if len(key) > 0 and len(nonce) > 0:
@@ -209,16 +223,17 @@ def LoadFile():
 
 	Load_filename_addr = filedialog.askopenfilename(title="Select A File", filetypes=[("All Files", "*.*")] ) # import file
 
-	if Load_filename_addr:
+	if Load_filename_addr: # If user has selected a file
 		LoadFile.addr_filename, LoadFile.name_filename = os.path.split(Load_filename_addr) # address of directories | filename.*
 
 		LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
 
-
-		LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename)
-
+		LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
 
 		LoadFile.data = open(LoadFile.full_filename_path, 'rb').read() # import data from file.txt
+
+		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
+			QuickDecryptChecker()
 
 		if len(LoadFile.full_filename_path) > 47:
 			LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
@@ -226,25 +241,40 @@ def LoadFile():
 		Load_file_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
 
-def ChangeKeyGenBits(event):
+def QuickDecryptChecker(): # Check if encrypted file is in database
 
-	if '128bits' in AES_encrypt_random_key_generator_button['text']:
-		AES_encrypt_random_key_generator_button['text'] = 'Generate 192bits Key (Hex)'
-		ChangeKeyGenBits.keybytes = 192//8
-	elif '192bits' in AES_encrypt_random_key_generator_button['text']:
-		AES_encrypt_random_key_generator_button['text'] = 'Generate 256bits Key (Hex)'
-		ChangeKeyGenBits.keybytes = 256//8
-	else:
-		AES_encrypt_random_key_generator_button['text'] = 'Generate 128bits Key (Hex)'
-		ChangeKeyGenBits.keybytes = 128//8
+	file_hash = hashlib.sha256(LoadFile.data).hexdigest()
+	if path.exists('file_keys_backup.txt'):
+		with open('file_keys_backup.txt','r') as f:
+			for line in f.readlines():
+				if file_hash in line:
+					Logger('info',"This file has been found in the database, so key and nonce have been filled automatically.")
+					file_items = line.split(' | ')
+					key = (file_items[2])[11:] # key value
+					nonce = (file_items[3])[13:-1] # nonce value
+
+					if (file_items[2])[:9] == 'Key (Hex)': # if key's format is Hex, then change it in program's settings
+						key_input_label_decrypt['text'] = "Key (Hex):"
+					else:
+						key_input_label_decrypt['text'] = "Key (Bts):"
+
+					key_input_decrypt.delete(0,END) # clear decrypt key input
+					key_input_decrypt.insert(0,key) # fill decrypt key input with key value
+					Nonce_input_decrypt.delete(0,END) # clear nonce input
+					Nonce_input_decrypt.insert(0,nonce) # fill nonce input with nonce value
+
+
+
+
+
 
 
 ###___ Methods ___###
 
 
+FCS_Version = 'V1.1'
 
-
-gui = Tk(className='FilesCrypterSavior V1.0')
+gui = Tk(className='FilesCrypterSavior ' + FCS_Version + '.')
 gui.geometry("900x460")
 gui.resizable(False,False)
 
@@ -329,8 +359,8 @@ row_num += 2
 ###--- Key Input ---###
 key_input_label_decrypt = Label(gui, text="Key (Hex):")
 key_input_label_decrypt.grid(row=row_num, column=0, sticky='W')
-Key_input_decrypt = Entry(gui, width=70, borderwidth=1)
-Key_input_decrypt.grid(row=row_num, column=1, padx=15)
+key_input_decrypt = Entry(gui, width=70, borderwidth=1)
+key_input_decrypt.grid(row=row_num, column=1, padx=15)
 key_input_label_decrypt.bind('<Button-1>',DecryptKeyBytesHexFormat)
 ###___ Key Input ___###
 
