@@ -1,4 +1,4 @@
-FCS_Version = 'V1.3'
+FCS_Version = 'V1.3' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -22,15 +22,18 @@ def UpdateCheck():
 	
 	Logger('info',"Checking for new version...")
 
-	try:
-		#last_version = int( ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/.version").text ).replace('.','') )
-		last_version = int ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')[0].split(' = ')[1][1:].replace('.','') )
-		cur_version = int( FCS_Version[1:].replace('.','') )
-			
-		if last_version > cur_version:
-			Logger('info',"There is a newer version! Please update FCS.")
-		else:
-			Logger('info',"You are up to date.")
+	try:		
+		try:
+			last_version = int ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')[0].split(' = ')[1].replace("'","").replace('V','').replace('.','').replace('\r','') )
+			cur_version = int( FCS_Version[1:].replace('.','') )
+
+			if last_version > cur_version:
+				Logger('info',"There is a newer version! Please update FCS.")
+			else:
+				Logger('info',"You are up to date.")
+		except ValueError:
+			Logger('error',"Please check back later or contact with R4GN4R. Probably there is an update on the way!")
+
 
 	except requests.exceptions.RequestException:
 		Logger('error',"[UC-1] Please check your internet connection.")
