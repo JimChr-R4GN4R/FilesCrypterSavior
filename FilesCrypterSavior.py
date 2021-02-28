@@ -23,7 +23,6 @@ def UpdateCheck():
 	Logger('info',"Checking for new version...")
 
 	try:
-		#last_version = int( ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/.version").text ).replace('.','') )
 		
 		try:
 			last_version = int ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')[0].split(' ')[2].replace("'","").replace('V','').replace('.','').replace('\r','') )
