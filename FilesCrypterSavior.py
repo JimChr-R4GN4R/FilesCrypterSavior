@@ -1,3 +1,5 @@
+FCS_Version = 'V1.2'
+
 from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
@@ -22,22 +24,13 @@ def UpdateCheck():
 
 	try:
 		#last_version = int( ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/.version").text ).replace('.','') )
-		text = requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')
-		version_found = False
-		for line in text:
-			if 'FCS_Version_TextPointer' in line:
-				version_found = True
-				last_version = int( line.split(' ')[2].replace("'","").replace('.','')[1:] )
-				cur_version = int( FCS_Version[1:].replace('.','') )
-
-				if last_version > cur_version:
-					Logger('info',"There is a newer version! Please update FCS.")
-				else:
-					Logger('info',"You are up to date.")
-				break
-
-		if not version_found:
-			Logger('error',"[UC-0] Something is wrong. Please check back later or contact with R4GN4R.")
+		last_version = int ( requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')[0].split(' = ')[1][1:].replace('.','') )
+		cur_version = int( FCS_Version[1:].replace('.','') )
+			
+		if last_version > cur_version:
+			Logger('info',"There is a newer version! Please update FCS.")
+		else:
+			Logger('info',"You are up to date.")
 
 	except requests.exceptions.RequestException:
 		Logger('error',"[UC-1] Please check your internet connection.")
@@ -312,7 +305,7 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 ###___ Methods ___###
 
 
-FCS_Version = 'V1.2' # Current FCS version - FCS_Version_TextPointer
+
 
 gui = Tk(className='FilesCrypterSavior ' + FCS_Version + '.')
 gui.geometry("900x460")
