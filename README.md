@@ -28,4 +28,4 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt data 
 
 - [ ] When selecting a folder instead of file, zip it and then encrypt it
 
-- [ ] Add `Update Checker` option.
+- [X] ~Add `Update Checker` option.~
