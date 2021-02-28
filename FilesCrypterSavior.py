@@ -1,4 +1,4 @@
-FCS_Version = 'V1.4' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V1.5' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -312,7 +312,7 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 
 
 gui = Tk(className='FilesCrypterSavior ' + FCS_Version + '.')
-gui.geometry("900x460")
+gui.geometry("1000x480")
 gui.resizable(False,False)
 
 
