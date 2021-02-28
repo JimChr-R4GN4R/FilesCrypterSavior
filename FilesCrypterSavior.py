@@ -1,4 +1,4 @@
-FCS_Version = 'V1.2'
+FCS_Version = 'V1.3'
 
 from tkinter import *
 from tkinter import messagebox
