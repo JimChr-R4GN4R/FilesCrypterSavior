@@ -277,7 +277,7 @@ def FileReader(file):
 
 
 def FolderToZip():
-	Logger('info', "Compressing folder with zip format...")
+	Logger('info', "Compressing folder in zip format...")
 	shutil.make_archive(LoadFile.name_filename + '.fcsfolder', 'zip', LoadFile.name_filename)
 	Logger('info', "Compression Finished.")
 
