@@ -1,4 +1,4 @@
-FCS_Version = 'V1.5' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V1.6' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -13,7 +13,7 @@ from Crypto.Cipher import AES
 import logging
 import pyperclip
 import hashlib
-
+import shutil
 ###--- Methods ---###
 
 
@@ -144,7 +144,7 @@ def Data_Encrypt(key): # Encrypt Data
 						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 
 			Logger('info',"Encryption Finished.")
-			Load_file_Button['text'] = "Load File"
+			Load_Button['text'] = "Load File/Folder"
 			
 		except ValueError:
 			Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
@@ -152,10 +152,16 @@ def Data_Encrypt(key): # Encrypt Data
 
 def AES_Encrypt(): # AES Encrypt
 
-	if Load_file_Button['text'] == "Load File":
+	if Load_Button['text'] == "Load File/Folder":
 		Logger('warn',"Please select a file to encrypt.")
+		return
+
 
 	elif path.exists(LoadFile.filepath): # file exists
+
+		if Load_Type.get() == 1: # If folder has been selected
+			FolderToZip() # Convert folder to zip and continue
+
 
 		key = key_input_encrypt.get()
 
@@ -184,7 +190,7 @@ def AES_Encrypt(): # AES Encrypt
 
 def AES_Decrypt(): # AES Decrypt
 
-	if Load_file_Button['text'] == "Load File":
+	if Load_Button['text'] == "Load File/Folder":
 		Logger('warn',"Please select a file to decrypt.")
 
 	elif path.exists(LoadFile.filepath): # file exists
@@ -218,13 +224,20 @@ def AES_Decrypt(): # AES Decrypt
 				Logger('info',"Decrypting with AES-GCM...")
 
 				try:
+					decrypted_filename = LoadFile.filepath[:-7] # remove .fcsenc extension
 					dec_bytes = unpad(cipher.decrypt(LoadFile.data),16)
-					dec_file = open(LoadFile.filepath[:-7], 'wb')
+					dec_file = open(decrypted_filename, 'wb')
 					dec_file.write(dec_bytes)
 					dec_file.close()
 					os.remove(LoadFile.filepath) # Delete encrypted file and backup_keys
 					Logger('info',"Decryption Finished.")
-					Load_file_Button['text'] = "Load File"
+
+					if decrypted_filename[-14:] == '.fcsfolder.zip': # if decrypted file has this extension, then it's zipped folder
+						shutil.unpack_archive(decrypted_filename, decrypted_filename[:-14], 'zip' ) # unzip
+						os.remove(decrypted_filename) # delete zip file
+
+
+					Load_Button['text'] = "Load File/Folder"
 
 					try: # If key and nonce are saved in database, then after decryption, delete specific line
 						with open('file_keys_backup.txt','r') as f:
@@ -250,18 +263,9 @@ def AES_Decrypt(): # AES Decrypt
 		Logger('error',"[AD-5] File doesn't exist.")
 
 
-def LoadFile():
+def FileReader(file):
 
-	Load_filename_addr = filedialog.askopenfilename(title="Select A File", filetypes=[("All Files", "*.*")] ) # import file
-
-	if Load_filename_addr: # If user has selected a file
-		LoadFile.addr_filename, LoadFile.name_filename = os.path.split(Load_filename_addr) # address of directories | filename.*
-
-		LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
-
-		LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
-
-		LoadFile.data = open(LoadFile.full_filename_path, 'rb').read() # import data from file.txt
+		LoadFile.data = open(file, 'rb').read() # import data from file.txt
 
 		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
 			QuickDecryptChecker()
@@ -269,7 +273,49 @@ def LoadFile():
 		if len(LoadFile.full_filename_path) > 47:
 			LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
 
-		Load_file_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
+		Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
+
+
+def FolderToZip():
+	Logger('info', "Compressing folder with zip format...")
+	shutil.make_archive(LoadFile.name_filename + '.fcsfolder', 'zip', LoadFile.name_filename)
+	Logger('info', "Compression Finished.")
+
+	try:
+		os.remove(LoadFile.filepath) # Delete original folder which got compressed
+	except PermissionError:
+		Logger('error', "FCS does not have permission to delete original folder. (Encryption Continues)")
+
+	LoadFile.filepath = LoadFile.filepath + '.fcsfolder.zip'
+	FileReader(LoadFile.filepath)
+
+
+def LoadFile():
+
+	if Load_Type.get() == 1: # Load_Type is folder
+		LoadFile.Load_folder_addr = filedialog.askdirectory(title="Select A Folder")
+		if LoadFile.Load_folder_addr:
+			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_folder_addr) # address of directories | filename.*
+			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
+			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+
+			if len(LoadFile.full_filename_path) > 47:
+				LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
+
+			Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
+
+	else: # Load_Type is file
+
+		LoadFile.Load_filename_addr = filedialog.askopenfilename(title="Select A File", filetypes=[("All Files", "*.*")] )
+
+		if LoadFile.Load_filename_addr: # If user has selected a file
+			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_filename_addr) # address of directories | filename.*
+			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
+			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+			FileReader(LoadFile.filepath)
+
+
+
 
 
 def QuickDecryptChecker(): # Check if encrypted file is in database
@@ -360,10 +406,19 @@ lab=Label(image=img).grid(row=row_num, columnspan=2, sticky=W)
 
 
 row_num += 2
-###--- Load File Button ---###
-Load_file_Button = Button(gui, text="Load File", height=2, width=60, command=LoadFile)
-Load_file_Button.grid(row=row_num,column=0,columnspan=3, pady=5, sticky=W)
-###___ Load File Button ___###
+###--- Load Button ---###
+Load_Button = Button(gui, text="Load File/Folder", height=2, width=65, command=LoadFile)
+Load_Button.grid(row=row_num,column=0,columnspan=2, pady=5, sticky=W)
+###___ Load Button ___###
+
+
+###--- Load Options ---###
+Load_Type = IntVar()
+R1 = Radiobutton(gui, text="File", variable=Load_Type, value=0)
+R1.grid(row=row_num,column=1, sticky=E, ipadx=20)
+R2 = Radiobutton(gui, text="Folder", variable=Load_Type, value=1)
+R2.grid(row=row_num,column=2, sticky=W)
+###___ Load Options ___###
 
 
 row_num += 1
