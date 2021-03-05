@@ -1,4 +1,4 @@
-FCS_Version = 'V1.6' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V1.7' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -14,6 +14,8 @@ import logging
 import pyperclip
 import hashlib
 import shutil
+
+
 ###--- Methods ---###
 
 
@@ -126,22 +128,35 @@ def Data_Encrypt(key): # Encrypt Data
 			LoadFile.data = pad(LoadFile.data,16) # Fix file bytes length
 			enc_bytes = cipher.encrypt(LoadFile.data) # Encrypting...
 
-			enc_file = open(LoadFile.filepath+'.fcsenc', 'wb') # Make new enc_file
+			enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
 			enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
 			enc_file.close()
 
 			if Delete_original_file_checkbox_value.get():
-				os.remove(LoadFile.filepath) # delete original file
+				try:
+					os.remove(LoadFile.filepath) # delete original file
+				except PermissionError:
+					Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
 
 			enc_file_hash = hashlib.sha256(enc_bytes).hexdigest()
 
 			if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
 				with open('file_keys_backup.txt', 'a') as enc_file:
+					try:
+						if '(Bts)' in key_input_label_encrypt['text']:
+							enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						else:
+							enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
+						file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
+						if '(Bts)' in key_input_label_encrypt['text']:
+							enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						else:
+							enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					except Exception as e:
+						Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
+						print(e) # For debug purpose
 
-					if '(Bts)' in key_input_label_encrypt['text']:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-					else:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 
 			Logger('info',"Encryption Finished.")
 			Load_Button['text'] = "Load File/Folder"
@@ -160,7 +175,8 @@ def AES_Encrypt(): # AES Encrypt
 	elif path.exists(LoadFile.filepath): # file exists
 
 		if Load_Type.get() == 1: # If folder has been selected
-			FolderToZip() # Convert folder to zip and continue
+			if FolderToZip():
+				return
 
 
 		key = key_input_encrypt.get()
@@ -264,8 +280,12 @@ def AES_Decrypt(): # AES Decrypt
 
 
 def FileReader(file):
-
-		LoadFile.data = open(file, 'rb').read() # import data from file.txt
+		# file = "".join([char for char in file if ord(char) < 128]) # If filename has special unicode characters (chunk), just remove them
+		try:
+			LoadFile.data = open(file, 'rb').read() # import data from file.txt
+		except FileNotFoundError:
+			Logger('error',"[FR-1] File wasn't found to read it's data. (Encryption/Decryption Stopped)")
+			return
 
 		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
 			QuickDecryptChecker()
@@ -277,14 +297,19 @@ def FileReader(file):
 
 
 def FolderToZip():
-	Logger('info', "Compressing folder in zip format...")
-	shutil.make_archive(LoadFile.name_filename + '.fcsfolder', 'zip', LoadFile.name_filename)
-	Logger('info', "Compression Finished.")
+	Logger('info',"Folder compression is about to start. Please wait...")
+	try:
+		Logger('info', "Compressing folder in zip format...")
+		shutil.make_archive(LoadFile.filepath + '.fcsfolder', 'zip', LoadFile.filepath)
+		Logger('info', "Compression Finished.")
+	except FileNotFoundError:
+		Logger( 'error', "There is no folder with that address: '{}' (Encryption Stopped)".format(LoadFile.filepath) )
+		return 1
 
 	try:
 		os.remove(LoadFile.filepath) # Delete original folder which got compressed
 	except PermissionError:
-		Logger('error', "FCS does not have permission to delete original folder. (Encryption Continues)")
+		Logger('error', "[FTZ-0] FCS does not have permission to delete original folder. (Encryption Continues)")
 
 	LoadFile.filepath = LoadFile.filepath + '.fcsfolder.zip'
 	FileReader(LoadFile.filepath)
@@ -298,7 +323,6 @@ def LoadFile():
 			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_folder_addr) # address of directories | filename.*
 			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
 			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
-
 			if len(LoadFile.full_filename_path) > 47:
 				LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
 
@@ -312,6 +336,7 @@ def LoadFile():
 			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_filename_addr) # address of directories | filename.*
 			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
 			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+
 			FileReader(LoadFile.filepath)
 
 
@@ -342,13 +367,6 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 					Nonce_input_decrypt.delete(0,END) # clear nonce input
 					Nonce_input_decrypt.insert(0,nonce) # fill nonce input with nonce value
 					break
-
-
-
-
-	
-
-
 
 
 
