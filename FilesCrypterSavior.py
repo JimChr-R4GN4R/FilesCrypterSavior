@@ -1,4 +1,4 @@
-FCS_Version = 'V1.7' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V1.8' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -121,48 +121,50 @@ def DecryptKeyBytesHexFormat(event=None):
 
 
 def Data_Encrypt(key): # Encrypt Data
-		try:
-			cipher = AES.new(key, AES.MODE_EAX)
-			nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
-			Logger('info',"Encrypting with AES-GCM...")
-			LoadFile.data = pad(LoadFile.data,16) # Fix file bytes length
-			enc_bytes = cipher.encrypt(LoadFile.data) # Encrypting...
+	try:
+		cipher = AES.new(key, AES.MODE_EAX)
+		nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
+		Logger('info',"Encrypting with AES-GCM...")
 
-			enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
-			enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
-			enc_file.close()
+		LoadFile.data = pad(LoadFile.data,16) # Fix file bytes length
+		enc_bytes = cipher.encrypt(LoadFile.data) # Encrypting...
+		enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
+		enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
+		enc_file.close()
 
-			if Delete_original_file_checkbox_value.get():
+		if Delete_original_file_checkbox_value.get():
+			try:
+				os.remove(LoadFile.filepath) # delete original file
+			except PermissionError:
+				Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
+
+		enc_file_hash = hashlib.sha256(enc_bytes).hexdigest()
+
+		if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
+			with open('file_keys_backup.txt', 'a') as enc_file:
 				try:
-					os.remove(LoadFile.filepath) # delete original file
-				except PermissionError:
-					Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
-
-			enc_file_hash = hashlib.sha256(enc_bytes).hexdigest()
-
-			if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
-				with open('file_keys_backup.txt', 'a') as enc_file:
-					try:
-						if '(Bts)' in key_input_label_encrypt['text']:
-							enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-						else:
-							enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-					except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
-						file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
-						if '(Bts)' in key_input_label_encrypt['text']:
-							enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-						else:
-							enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-					except Exception as e:
-						Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
-						print(e) # For debug purpose
+					if '(Bts)' in key_input_label_encrypt['text']:
+						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					else:
+						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					Logger('info',"Key/Nonce have been added in the database.")
+				except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
+					file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
+					if '(Bts)' in key_input_label_encrypt['text']:
+						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					else:
+						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+					Logger('info',"Key/Nonce have been added in the database.")
+				except Exception as e:
+					Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
+					print(e) # For debug purpose
 
 
-			Logger('info',"Encryption Finished.")
-			Load_Button['text'] = "Load File/Folder"
-			
-		except ValueError:
-			Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
+		Logger('info',"Encryption Finished.")
+		Load_Button['text'] = "Load File/Folder"
+		
+	except ValueError:
+		Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
 
 
 def AES_Encrypt(): # AES Encrypt
