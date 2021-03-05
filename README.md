@@ -1,5 +1,6 @@
 # FilesCrypterSavior
 This is a GUI program based on Python3 which helps you encrypt and decrypt files and folders with AES-GCM.
+![image](https://user-images.githubusercontent.com/59511698/110169966-245c5f80-7e02-11eb-8875-70c2619a2403.png)
 
 ### Tested On
 - Windows 10 with Python 3.8.8
