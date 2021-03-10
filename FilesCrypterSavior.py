@@ -1,4 +1,4 @@
-FCS_Version = 'V2.0' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.1' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -7,7 +7,6 @@ from tkinter import scrolledtext
 from PIL import Image, ImageTk
 import os
 from os import path
-from sys import platform
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import AES
@@ -16,7 +15,7 @@ import pyperclip
 import hashlib
 import shutil
 import mmap
-
+from sys import platform
 
 
 ###--- Methods ---###
@@ -129,13 +128,17 @@ def Data_Encrypt(key): # Encrypt Data
 		nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
 		Logger('info',"Encrypting with AES-EAX...")
 		try:
-			enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
-			if Load_file_in_ram_value == 1:
-				WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
+			Data_Encrypt.enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
+			if Load_file_in_ram_value.get() == 1:
+				try:
+					WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
+				except ValueError:
+					Logger('error',"[DE-4] There is no file with this name.")
+					return
 
 			else:
 				enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
-				enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
+				enc_file.write(Data_Encrypt.enc_bytes) # Write encrypted bytes in enc_file 
 				enc_file.close()
 		except MemoryError:
 			Logger('error',"[DE-3] File could not be encrypted, cause of not enough memory. (Encryption Stopped)")
@@ -147,7 +150,7 @@ def Data_Encrypt(key): # Encrypt Data
 			except PermissionError:
 				Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
 
-		enc_file_hash = hashlib.sha256(enc_bytes).hexdigest()
+		enc_file_hash = hashlib.sha256(Data_Encrypt.enc_bytes).hexdigest()
 
 		if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
 			with open('file_keys_backup.txt', 'a') as enc_file:
@@ -173,7 +176,8 @@ def Data_Encrypt(key): # Encrypt Data
 		Load_Button['text'] = "Load File/Folder"
 		
 	except ValueError:
-		Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value")
+		Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value.")
+		print(e)
 
 
 def AES_Encrypt(): # AES Encrypt
@@ -293,8 +297,13 @@ def AES_Decrypt(): # AES Decrypt
 def FileReader(file):
 		Logger('info',"Loading file data. Please wait...")
 
-		if Load_file_in_ram_value == 1:
-			LoadFileToRAM(file)
+		if Load_file_in_ram_value.get() == 1:
+			try:
+				LoadFileToRAM(file)
+			except ValueError:
+				Logger('error',"[DE-4] There is no file with this name.")
+				return
+
 		else:
 			try:
 				LoadFile.data = open(file, 'rb').read() # import data from file.txt
@@ -358,13 +367,13 @@ def WriteFileFromRAM(file):
 	if platform == "linux":
 		with open(file, 'wb') as enc_file:
 			enc_file = mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
-			enc_file.write(enc_bytes)
+			enc_file.write(Data_Encrypt.enc_bytes)
 			enc_file.close()
 
 	elif (platform == "win32") or (platform == "cygwin"):
-		with open(LoadFile.filepath + '.fcsenc', 'wb') as enc_file:
+		with open(file, 'wb') as enc_file:
 			enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
-			enc_file.write(enc_bytes)
+			enc_file.write(Data_Encrypt.enc_bytes)
 			enc_file.close()
 
 
