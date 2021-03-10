@@ -14,6 +14,7 @@ import logging
 import pyperclip
 import hashlib
 import shutil
+import mmap
 
 
 ###--- Methods ---###
