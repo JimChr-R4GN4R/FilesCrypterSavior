@@ -1,4 +1,4 @@
-FCS_Version = 'V1.9' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.0' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -7,6 +7,7 @@ from tkinter import scrolledtext
 from PIL import Image, ImageTk
 import os
 from os import path
+from sys import platform
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import AES
@@ -15,6 +16,7 @@ import pyperclip
 import hashlib
 import shutil
 import mmap
+
 
 
 ###--- Methods ---###
@@ -62,7 +64,7 @@ def Logger(mtype, message):
 	message += '\n'
 
 	Logging_window.insert(INSERT, message)
-	Logging_window.configure(state='disabled')# Disable Logging window to not edit messages
+	Logging_window.configure(state='disabled') # Disable Logging window to not edit messages
 
 
 def KeyRandomGenerator():
@@ -129,10 +131,7 @@ def Data_Encrypt(key): # Encrypt Data
 		try:
 			enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
 			if Load_file_in_ram_value == 1:
-				with open(LoadFile.filepath + '.fcsenc', 'wb') as enc_file:
-					enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
-					enc_file.write(enc_bytes)
-				enc_file.close()
+				WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
 
 			else:
 				enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
@@ -295,8 +294,7 @@ def FileReader(file):
 		Logger('info',"Loading file data. Please wait...")
 
 		if Load_file_in_ram_value == 1:
-			with open(file, 'rb') as f:
-				LoadFile.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
+			LoadFileToRAM(file)
 		else:
 			try:
 				LoadFile.data = open(file, 'rb').read() # import data from file.txt
@@ -310,6 +308,8 @@ def FileReader(file):
 						Logger('info',"Please make some space and encrypt the zip file manually.")
 				else:
 					Logger('error',"[FR-3] File could not be read, cause of not enough memory. (Encryption Stopped)")
+
+		Logger('info',"Loading Completed.")
 
 		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
 			QuickDecryptChecker()
@@ -344,6 +344,30 @@ def FolderToZip():
 	FileReader(LoadFile.filepath)
 
 
+def LoadFileToRAM(file):
+	if platform == "linux":
+		with open(file, 'rb') as f:
+			LoadFile.data = ( mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ) ).read()
+
+	elif (platform == "win32") or (platform == "cygwin"):
+		with open(file, 'rb') as f:
+			LoadFile.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
+
+
+def WriteFileFromRAM(file):
+	if platform == "linux":
+		with open(file, 'wb') as enc_file:
+			enc_file = mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
+			enc_file.write(enc_bytes)
+			enc_file.close()
+
+	elif (platform == "win32") or (platform == "cygwin"):
+		with open(LoadFile.filepath + '.fcsenc', 'wb') as enc_file:
+			enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
+			enc_file.write(enc_bytes)
+			enc_file.close()
+
+
 def LoadFile():
 
 	if Load_Type.get() == 1: # Load_Type is folder
@@ -374,7 +398,6 @@ def LoadFile():
 
 def QuickDecryptChecker(): # Check if encrypted file is in database
 
-	
 	if path.exists('file_keys_backup.txt'):
 		file_hash = hashlib.sha256(LoadFile.data).hexdigest()
 
@@ -528,6 +551,7 @@ row_num += 2
 ###--- Logger ---###
 log_label = Label(gui, text="Log:", anchor=W).grid(row=row_num, column=0, pady=15, sticky='W')
 Logging_window = scrolledtext.ScrolledText(gui, width = 100, height = 10)
+Logging_window.configure(state='disabled')
 Logging_window.grid(row=row_num, column=1, columnspan=4, pady=15)
 ###___ Logger ___###
 
