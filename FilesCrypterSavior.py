@@ -1,4 +1,4 @@
-FCS_Version = 'V1.8' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V1.9' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -124,13 +124,22 @@ def Data_Encrypt(key): # Encrypt Data
 	try:
 		cipher = AES.new(key, AES.MODE_EAX)
 		nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
-		Logger('info',"Encrypting with AES-GCM...")
+		Logger('info',"Encrypting with AES-EAX...")
+		try:
+			enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
+			if Load_file_in_ram_value == 1:
+				with open(LoadFile.filepath + '.fcsenc', 'wb') as enc_file:
+					enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
+					enc_file.write(enc_bytes)
+				enc_file.close()
 
-		LoadFile.data = pad(LoadFile.data,16) # Fix file bytes length
-		enc_bytes = cipher.encrypt(LoadFile.data) # Encrypting...
-		enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
-		enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
-		enc_file.close()
+			else:
+				enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
+				enc_file.write(enc_bytes) # Write encrypted bytes in enc_file 
+				enc_file.close()
+		except MemoryError:
+			Logger('error',"[DE-3] File could not be encrypted, cause of not enough memory. (Encryption Stopped)")
+			return
 
 		if Delete_original_file_checkbox_value.get():
 			try:
@@ -239,7 +248,7 @@ def AES_Decrypt(): # AES Decrypt
 
 			try:
 				cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
-				Logger('info',"Decrypting with AES-GCM...")
+				Logger('info',"Decrypting with AES-EAX...")
 
 				try:
 					decrypted_filename = LoadFile.filepath[:-7] # remove .fcsenc extension
@@ -282,12 +291,24 @@ def AES_Decrypt(): # AES Decrypt
 
 
 def FileReader(file):
-		# file = "".join([char for char in file if ord(char) < 128]) # If filename has special unicode characters (chunk), just remove them
-		try:
-			LoadFile.data = open(file, 'rb').read() # import data from file.txt
-		except FileNotFoundError:
-			Logger('error',"[FR-1] File wasn't found to read it's data. (Encryption/Decryption Stopped)")
-			return
+		Logger('info',"Loading file data. Please wait...")
+
+		if Load_file_in_ram_value == 1:
+			with open(file, 'rb') as f:
+				LoadFile.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
+		else:
+			try:
+				LoadFile.data = open(file, 'rb').read() # import data from file.txt
+			except FileNotFoundError:
+				Logger('error',"[FR-1] File wasn't found. (Encryption/Decryption Stopped)")
+				return
+			except MemoryError:
+				if FolderToZip.compression_finished_verification_var != -1:
+					Logger('error',"[FR-2] Zipped file could not be read, cause of not enough memory. (Encryption Stopped)")
+					if FolderToZip.compression_finished_verification_var == 0:
+						Logger('info',"Please make some space and encrypt the zip file manually.")
+				else:
+					Logger('error',"[FR-3] File could not be read, cause of not enough memory. (Encryption Stopped)")
 
 		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
 			QuickDecryptChecker()
@@ -298,14 +319,19 @@ def FileReader(file):
 		Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
 
+
 def FolderToZip():
+	FolderToZip.compression_finished_verification_var = -1
+
 	Logger('info',"Folder compression is about to start. Please wait...")
 	try:
 		Logger('info', "Compressing folder in zip format...")
 		shutil.make_archive(LoadFile.filepath + '.fcsfolder', 'zip', LoadFile.filepath)
 		Logger('info', "Compression Finished.")
+		FolderToZip.compression_finished_verification_var = 0
 	except FileNotFoundError:
 		Logger( 'error', "There is no folder with that address: '{}' (Encryption Stopped)".format(LoadFile.filepath) )
+		FolderToZip.compression_finished_verification_var = 1
 		return 1
 
 	try:
@@ -408,6 +434,11 @@ view_menu.add_checkbutton(label="Delete original file after encryption/decryptio
 Backup_keyFile_value = IntVar(value=1)
 view_menu.add_checkbutton(label="Add key and nonce in the database", onvalue=1, offvalue=0, variable=Backup_keyFile_value)
 ###___ Option 2 ___###
+
+###--- Option 3 ---###
+Load_file_in_ram_value = IntVar(value=0)
+view_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
+###___ Option 3 ___###
 
 menubar.add_cascade(label='Options', menu=view_menu)
 gui.config(menu=menubar)
