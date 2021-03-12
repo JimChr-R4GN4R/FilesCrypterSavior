@@ -1,4 +1,4 @@
-FCS_Version = 'V2.1' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.2' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -19,6 +19,51 @@ from sys import platform
 
 
 ###--- Methods ---###
+
+
+
+def DefaultSettingsSetter():
+	ChangeKeyGenBits.keybytes = 128//8 # Default generate key bytes length
+	LoadFile.filepath = "-" # Default filepath which does not exist
+
+	global Delete_original_file_checkbox_value
+	global Backup_key_nonce_setting_value
+	global Load_file_in_ram_value
+	global Keys_Backup_file
+
+	try:
+		settings_file = open('settings.txt').readlines()
+		for line in settings_file:
+			try:
+				option_name, value = line.replace('\n','').split(' :=: ')
+				if option_name == 'Delete_original_file_checkbox_value': Delete_original_file_checkbox_value = IntVar(value=int(value))
+				elif option_name == 'Backup_key_nonce_setting_value': Backup_key_nonce_setting_value = IntVar(value=int(value))
+				elif option_name == 'Load_file_in_ram_value': Load_file_in_ram_value = IntVar(value=int(value))
+				elif option_name == 'Keys_Backup_file': Keys_Backup_file = value
+			except:
+				pass
+
+	except FileNotFoundError:
+		Logger('error',"settings.txt was not found. Default settings have been setted.")
+		Delete_original_file_checkbox_value = IntVar(value=1)
+		Backup_key_nonce_setting_value = IntVar(value=1)
+		Load_file_in_ram_value = IntVar(value=0)
+		Keys_Backup_file = 'file_keys_backup.txt' # Default
+
+
+def SettingsSave():
+	global Delete_original_file_checkbox_value
+	global Backup_key_nonce_setting_value
+	global Load_file_in_ram_value
+	global Keys_Backup_file
+
+	with open('settings.txt','w') as f:
+		f.write('Delete_original_file_checkbox_value :=: ' + str(Delete_original_file_checkbox_value.get()) + '\n')
+		f.write('Backup_key_nonce_setting_value :=: ' + str(Backup_key_nonce_setting_value.get()) + '\n')
+		f.write('Load_file_in_ram_value :=: ' + str(Load_file_in_ram_value.get()) + '\n')
+		f.write('Keys_Backup_file :=: ' + Keys_Backup_file)
+
+	Logger('info',"Settings have been saved.")
 
 
 def UpdateCheck():
@@ -48,6 +93,16 @@ def UpdateCheck():
 		Logger('error',"[UC-3] Error Connecting.")
 	except requests.exceptions.Timeout:
 		Logger('error',"[UC-4] Timeout Error.")   
+
+
+def ImportKeysBackupFile():
+	global Keys_Backup_file
+	Keys_Backup_file = filedialog.askopenfilename(title="Select Key Backup file", filetypes=[("Text File", "*.txt")] )
+
+	if Keys_Backup_file:
+		Logger('info',f'You have selected as Keys Backup file: {Keys_Backup_file} \n(To be your default backup file, please Save Settings.)')
+	else:
+		Keys_Backup_file = 'file_keys_backup.txt'
 
 
 def Logger(mtype, message):
@@ -152,21 +207,21 @@ def Data_Encrypt(key): # Encrypt Data
 
 		enc_file_hash = hashlib.sha256(Data_Encrypt.enc_bytes).hexdigest()
 
-		if Backup_keyFile_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
-			with open('file_keys_backup.txt', 'a') as enc_file:
+		if Backup_key_nonce_setting_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
+			with open(Keys_Backup_file, 'a') as enc_file:
 				try:
 					if '(Bts)' in key_input_label_encrypt['text']:
 						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
 						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-					Logger('info',"Key/Nonce have been added in the database.")
+					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
 					file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
 					if '(Bts)' in key_input_label_encrypt['text']:
 						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
 						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
-					Logger('info',"Key/Nonce have been added in the database.")
+					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except Exception as e:
 					Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
 					print(e) # For debug purpose
@@ -270,16 +325,16 @@ def AES_Decrypt(): # AES Decrypt
 
 					Load_Button['text'] = "Load File/Folder"
 
-					try: # If key and nonce are saved in database, then after decryption, delete specific line
-						with open('file_keys_backup.txt','r') as f:
+					try: # If key and nonce are saved in Keys Backup file, then after decryption, delete specific line
+						with open(Keys_Backup_file,'r') as f:
 							tmp = ''
 							for i in f.readlines():
 								if LoadFile.filepath not in i:
 									tmp += i
-						with open('file_keys_backup.txt','w') as f:
+						with open(Keys_Backup_file,'w') as f:
 							f.write(tmp)
 					except FileNotFoundError:
-						Logger('info',"There wasn't found any key/nonce database to remove specific information. (Not Important)")
+						Logger('info',"There wasn't found any key/nonce Keys Backup file to remove specific information. (Not Important)")
 
 				except ValueError:
 					Logger('error',"[AD-3] Key or Nonce is not correct.")
@@ -320,7 +375,7 @@ def FileReader(file):
 
 		Logger('info',"Loading Completed.")
 
-		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the database if it's recorded
+		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the Keys Backup file if it's recorded
 			QuickDecryptChecker()
 
 		if len(LoadFile.full_filename_path) > 47:
@@ -340,7 +395,7 @@ def FolderToZip():
 		Logger('info', "Compression Finished.")
 		FolderToZip.compression_finished_verification_var = 0
 	except FileNotFoundError:
-		Logger( 'error', "There is no folder with that address: '{}' (Encryption Stopped)".format(LoadFile.filepath) )
+		Logger( 'error', f"There is no folder with that address: '{LoadFile.filepath}' (Encryption Stopped)")
 		FolderToZip.compression_finished_verification_var = 1
 		return 1
 
@@ -364,18 +419,12 @@ def LoadFileToRAM(file):
 
 
 def WriteFileFromRAM(file):
-	if platform == "linux":
-		with open(file, 'wb') as enc_file:
+	with open(file, 'wb') as enc_file:
+		if platform == "linux":
 			enc_file = mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
-			enc_file.write(Data_Encrypt.enc_bytes)
-			enc_file.close()
-
-	elif (platform == "win32") or (platform == "cygwin"):
-		with open(file, 'wb') as enc_file:
+		elif (platform == "win32") or (platform == "cygwin"):
 			enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
-			enc_file.write(Data_Encrypt.enc_bytes)
-			enc_file.close()
-
+		enc_file.write(Data_Encrypt.enc_bytes)
 
 def LoadFile():
 
@@ -402,18 +451,15 @@ def LoadFile():
 			FileReader(LoadFile.filepath)
 
 
+def QuickDecryptChecker(): # Check if encrypted file is in Keys Backup file
 
-
-
-def QuickDecryptChecker(): # Check if encrypted file is in database
-
-	if path.exists('file_keys_backup.txt'):
+	if path.exists(Keys_Backup_file):
 		file_hash = hashlib.sha256(LoadFile.data).hexdigest()
 
-		with open('file_keys_backup.txt','r') as f:
+		with open(Keys_Backup_file,'r') as f:
 			for line in f.readlines():
 				if file_hash in line:
-					Logger('info',"This file has been found in the database, so key and nonce have been filled automatically.")
+					Logger('info',"This file has been found in the Keys Backup file, so key and nonce have been filled automatically.")
 					file_items = line.split(' | ')
 					key = (file_items[2])[11:] # key value
 					nonce = (file_items[3])[13:-1] # nonce value
@@ -431,6 +477,10 @@ def QuickDecryptChecker(): # Check if encrypted file is in database
 
 
 
+
+
+
+
 ###___ Methods ___###
 
 
@@ -442,41 +492,45 @@ gui.resizable(False,False)
 
 
 
+row_num = 7
+###--- Logger ---###
+log_label = Label(gui, text="Log:", anchor=W).grid(row=row_num, column=0, pady=15, sticky='W')
+Logging_window = scrolledtext.ScrolledText(gui, width = 100, height = 10)
+Logging_window.configure(state='disabled')
+Logging_window.grid(row=row_num, column=1, columnspan=4, pady=15)
+###___ Logger ___###
 
-###--- Default Values ---###
-ChangeKeyGenBits.keybytes = 128//8 # Default generate key bytes length
-LoadFile.filepath = "-" # Default filepath which does not exist
-###___ Default Values ___###
+
+DefaultSettingsSetter() # Set default Settings
 
 
-####--- Menu Options ---####
+#####---- Menu Bars ----####
+settings_menubar = Menu(gui)
 
-menubar = Menu(gui)
-view_menu = Menu(menubar)
 
-###--- Option 0 ---###
-view_menu.add_command(label="Check for updates", command=UpdateCheck)
-###___ Option 0 ___###
+###--- Menu Settings ---###
+view_main_menu = Menu(settings_menubar)
 
-###--- Option 1 ---###
-Delete_original_file_checkbox_value = IntVar(value=1)
-view_menu.add_checkbutton(label="Delete original file after encryption/decryption", onvalue=1, offvalue=0, variable=Delete_original_file_checkbox_value)
-###___ Option 1 ___###
+view_main_menu.add_command(label="Check for updates", command=UpdateCheck)
+view_main_menu.add_checkbutton(label="Delete original file after encryption/decryption", onvalue=1, offvalue=0, variable=Delete_original_file_checkbox_value)
+view_main_menu.add_checkbutton(label="Store key/nonce in backup file", onvalue=1, offvalue=0, variable=Backup_key_nonce_setting_value)
+view_main_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
+view_main_menu.add_command(label="Save Settings", command=SettingsSave)
 
-###--- Option 2 ---###
-Backup_keyFile_value = IntVar(value=1)
-view_menu.add_checkbutton(label="Add key and nonce in the database", onvalue=1, offvalue=0, variable=Backup_keyFile_value)
-###___ Option 2 ___###
+settings_menubar.add_cascade(label='Menu Settings', menu=view_main_menu)
+###___ Menu Settings ___###
 
-###--- Option 3 ---###
-Load_file_in_ram_value = IntVar(value=0)
-view_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
-###___ Option 3 ___###
+###--- Keys Backup Settings ---###
+view_Keys_Backup_file_menu = Menu(settings_menubar)
 
-menubar.add_cascade(label='Options', menu=view_menu)
-gui.config(menu=menubar)
+view_Keys_Backup_file_menu.add_command(label="Select Keys Backup file", command=ImportKeysBackupFile)
 
-####___ Menu Options ___####
+settings_menubar.add_cascade(label='Keys Backup File Settings', menu=view_Keys_Backup_file_menu)
+###___ Keys Backup Settings ___###
+
+
+gui.config(menu=settings_menubar)
+#####____ Menu Bars ____####
 
 
 row_num = 0
@@ -489,23 +543,23 @@ lab=Label(image=img).grid(row=row_num, columnspan=2, sticky=W)
 ###___ Logo ___###
 
 
-row_num += 2
+row_num = 2
 ###--- Load Button ---###
 Load_Button = Button(gui, text="Load File/Folder", height=2, width=65, command=LoadFile)
 Load_Button.grid(row=row_num,column=0,columnspan=2, pady=5, sticky=W)
 ###___ Load Button ___###
 
 
-###--- Load Options ---###
+###--- Load Settings ---###
 Load_Type = IntVar()
 R1 = Radiobutton(gui, text="File", variable=Load_Type, value=0)
 R1.grid(row=row_num,column=1, sticky=E, ipadx=20)
 R2 = Radiobutton(gui, text="Folder", variable=Load_Type, value=1)
 R2.grid(row=row_num,column=2, sticky=W)
-###___ Load Options ___###
+###___ Load Settings ___###
 
 
-row_num += 1
+row_num = 3
 ####--- AES Encrypt ---####
 
 
@@ -532,7 +586,7 @@ AES_encrypt_button = Button(gui, text ="AES Encrypt", height=2, padx=5, fg="gree
 
 
 
-row_num += 2
+row_num = 5
 ####--- AES Decrypt ---####
 
 
@@ -555,14 +609,6 @@ AES_decrypt_button = Button(gui, text ="AES Decrypt", height=2, padx=5, fg="gree
 
 ####___ AES Decrypt ___####
 
-
-row_num += 2
-###--- Logger ---###
-log_label = Label(gui, text="Log:", anchor=W).grid(row=row_num, column=0, pady=15, sticky='W')
-Logging_window = scrolledtext.ScrolledText(gui, width = 100, height = 10)
-Logging_window.configure(state='disabled')
-Logging_window.grid(row=row_num, column=1, columnspan=4, pady=15)
-###___ Logger ___###
 
 
 
