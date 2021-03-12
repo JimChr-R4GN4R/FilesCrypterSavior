@@ -1,0 +1,4 @@
+Delete_original_file_checkbox_value :=: 1
+Backup_key_nonce_setting_value :=: 1
+Load_file_in_ram_value :=: 0
+Keys_Backup_file :=: file_keys_backup.txt
