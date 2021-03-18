@@ -1,4 +1,4 @@
-FCS_Version = 'V2.3' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.4' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -183,7 +183,8 @@ def Data_Encrypt(key): # Encrypt Data
 		nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
 		Logger('info',"Encrypting with AES-EAX...")
 		try:
-			Data_Encrypt.enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
+			Data_Encrypt.enc_bytes = cipher.encrypt( pad(FileReader.data,16) ) # Fix file bytes length | Encrypting...
+			FileReader.data = None
 			if Load_file_in_ram_value == 1:
 				try:
 					WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
@@ -225,6 +226,7 @@ def Data_Encrypt(key): # Encrypt Data
 				except Exception as e:
 					Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
 					print(e) # For debug purpose
+			enc_file.close()
 
 
 		Logger('info',"Encryption Finished.")
@@ -233,6 +235,8 @@ def Data_Encrypt(key): # Encrypt Data
 	except ValueError:
 		Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value.")
 		print(e)
+
+	Data_Encrypt.enc_bytes = None
 
 
 def AES_Encrypt(): # AES Encrypt
@@ -311,7 +315,7 @@ def AES_Decrypt(): # AES Decrypt
 
 				try:
 					decrypted_filename = LoadFile.filepath[:-7] # remove .fcsenc extension
-					dec_bytes = unpad(cipher.decrypt(LoadFile.data),16)
+					dec_bytes = unpad(cipher.decrypt(FileReader.data),16)
 					dec_file = open(decrypted_filename, 'wb')
 					dec_file.write(dec_bytes)
 					dec_file.close()
@@ -361,7 +365,7 @@ def FileReader(file):
 
 		else:
 			try:
-				LoadFile.data = open(file, 'rb').read() # import data from file.txt
+				FileReader.data = open(file, 'rb').read() # import data from file.txt
 			except FileNotFoundError:
 				Logger('error',"[FR-1] File wasn't found. (Encryption/Decryption Stopped)")
 				return
@@ -411,11 +415,11 @@ def FolderToZip():
 def LoadFileToRAM(file):
 	if platform == "linux":
 		with open(file, 'rb') as f:
-			LoadFile.data = ( mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ) ).read()
+			FileReader.data = ( mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ) ).read()
 
 	elif (platform == "win32") or (platform == "cygwin"):
 		with open(file, 'rb') as f:
-			LoadFile.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
+			FileReader.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
 
 
 def WriteFileFromRAM(file):
@@ -456,7 +460,7 @@ def LoadFile():
 def QuickDecryptChecker(): # Check if encrypted file is in Keys Backup file
 
 	if path.exists(Keys_Backup_file):
-		file_hash = hashlib.sha256(LoadFile.data).hexdigest()
+		file_hash = hashlib.sha256(FileReader.data).hexdigest()
 
 		with open(Keys_Backup_file,'r') as f:
 			for line in f.readlines():
