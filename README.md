@@ -34,7 +34,7 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 - [X] ~When selecting a folder instead of file, zip it and then encrypt it.~ (It's recommended not to encrypt files more than ~3GB at once if there is not enough space and RAM)
 
 
-- [X] ~Add option that you can load data directly to RAM instead of hard disk in case there is not enough disk space.~
+- [X] ~Add option that you can load data directly to RAM instead of hard disk in case there is not enough disk space.~ (Not stable yet!)
 
 - [X] ~Make save options feature.~
 
