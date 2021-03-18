@@ -1,4 +1,4 @@
-FCS_Version = 'V2.2' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.3' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -184,7 +184,7 @@ def Data_Encrypt(key): # Encrypt Data
 		Logger('info',"Encrypting with AES-EAX...")
 		try:
 			Data_Encrypt.enc_bytes = cipher.encrypt( pad(LoadFile.data,16) ) # Fix file bytes length | Encrypting...
-			if Load_file_in_ram_value.get() == 1:
+			if Load_file_in_ram_value == 1:
 				try:
 					WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
 				except ValueError:
@@ -352,7 +352,7 @@ def AES_Decrypt(): # AES Decrypt
 def FileReader(file):
 		Logger('info',"Loading file data. Please wait...")
 
-		if Load_file_in_ram_value.get() == 1:
+		if Load_file_in_ram_value == 1:
 			try:
 				LoadFileToRAM(file)
 			except ValueError:
@@ -419,12 +419,14 @@ def LoadFileToRAM(file):
 
 
 def WriteFileFromRAM(file):
-	with open(file, 'wb') as enc_file:
-		if platform == "linux":
-			enc_file = mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
-		elif (platform == "win32") or (platform == "cygwin"):
-			enc_file = mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
-		enc_file.write(Data_Encrypt.enc_bytes)
+	try:
+		with open(file, 'wb') as enc_file:
+			if platform == "linux":
+				mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
+			elif (platform == "win32") or (platform == "cygwin"):
+				mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
+	except Exception as e:
+		print(e)
 
 def LoadFile():
 
@@ -514,7 +516,9 @@ view_main_menu = Menu(settings_menubar)
 view_main_menu.add_command(label="Check for updates", command=UpdateCheck)
 view_main_menu.add_checkbutton(label="Delete original file after encryption/decryption", onvalue=1, offvalue=0, variable=Delete_original_file_checkbox_value)
 view_main_menu.add_checkbutton(label="Store key/nonce in backup file", onvalue=1, offvalue=0, variable=Backup_key_nonce_setting_value)
-view_main_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
+
+Load_file_in_ram_value = 0
+# view_main_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
 view_main_menu.add_command(label="Save Settings", command=SettingsSave)
 
 settings_menubar.add_cascade(label='Menu Settings', menu=view_main_menu)
