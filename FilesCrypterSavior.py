@@ -1,4 +1,4 @@
-FCS_Version = 'V2.5' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.6' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -67,9 +67,9 @@ def SettingsSave():
 	with open('settings.txt','w') as f:
 		f.write('Delete_original_file_checkbox_value :=: ' + str(Delete_original_file_checkbox_value.get()) + '\n')
 		f.write('Backup_key_nonce_setting_value :=: ' + str(Backup_key_nonce_setting_value.get()) + '\n')
-		f.write('Load_file_in_ram_value :=: ' + str(Load_file_in_ram_value.get()) + '\n')
-		f.write('Keys_Backup_file :=: ' + Keys_Backup_file)
-		f.write('Generated_key_in_use_checker_value :=: ' + Generated_key_in_use_checker_value.get())
+		#f.write('Load_file_in_ram_value :=: ' + str(Load_file_in_ram_value.get()) + '\n') # Not used for now
+		f.write('Keys_Backup_file :=: ' + Keys_Backup_file + '\n')
+		f.write('Generated_key_in_use_checker_value :=: ' + str(Generated_key_in_use_checker_value.get()) )
 
 	Logger('info',"Settings have been saved.")
 
@@ -222,6 +222,7 @@ def Data_Encrypt(key): # Encrypt Data
 		if Delete_original_file_checkbox_value.get():
 			try:
 				os.remove(LoadFile.filepath) # delete original file
+				Logger('info',"Original file has been deleted.")
 			except PermissionError:
 				Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
 
@@ -337,11 +338,13 @@ def AES_Decrypt(): # AES Decrypt
 					dec_file.write(dec_bytes)
 					dec_file.close()
 					os.remove(LoadFile.filepath) # Delete encrypted file and backup_keys
+					Logger('info',"Original file has been deleted.")
 					Logger('info',"Decryption Finished.")
 
 					if decrypted_filename[-14:] == '.fcsfolder.zip': # if decrypted file has this extension, then it's zipped folder
 						shutil.unpack_archive(decrypted_filename, decrypted_filename[:-14], 'zip' ) # unzip
 						os.remove(decrypted_filename) # delete zip file
+						Logger('info',"Original file has been deleted.")
 
 
 					Load_Button['text'] = "Load File/Folder"
@@ -421,6 +424,7 @@ def FolderToZip():
 
 	try:
 		os.remove(LoadFile.filepath) # Delete original folder which got compressed
+		Logger('info',"Original file has been deleted.")
 	except PermissionError:
 		Logger('error', "[FTZ-0] FCS does not have permission to delete original folder. (Encryption Continues)")
 
