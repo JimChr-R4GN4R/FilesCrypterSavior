@@ -1,4 +1,4 @@
-FCS_Version = 'V2.4' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.5' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -30,6 +30,14 @@ def DefaultSettingsSetter():
 	global Backup_key_nonce_setting_value
 	global Load_file_in_ram_value
 	global Keys_Backup_file
+	global Generated_key_in_use_checker_value
+
+
+	Delete_original_file_checkbox_value = IntVar(value=1)
+	Backup_key_nonce_setting_value = IntVar(value=1)
+	Load_file_in_ram_value = IntVar(value=0)
+	Keys_Backup_file = 'file_keys_backup.txt' # Default file
+	Generated_key_in_use_checker_value = IntVar(value=1)
 
 	try:
 		settings_file = open('settings.txt').readlines()
@@ -40,15 +48,13 @@ def DefaultSettingsSetter():
 				elif option_name == 'Backup_key_nonce_setting_value': Backup_key_nonce_setting_value = IntVar(value=int(value))
 				elif option_name == 'Load_file_in_ram_value': Load_file_in_ram_value = IntVar(value=int(value))
 				elif option_name == 'Keys_Backup_file': Keys_Backup_file = value
+				elif option_name == 'Generated_key_in_use_checker_value': Generated_key_in_use_checker_value = IntVar(value=int(value))
 			except:
 				pass
 
 	except FileNotFoundError:
 		Logger('error',"settings.txt was not found. Default settings have been setted.")
-		Delete_original_file_checkbox_value = IntVar(value=1)
-		Backup_key_nonce_setting_value = IntVar(value=1)
-		Load_file_in_ram_value = IntVar(value=0)
-		Keys_Backup_file = 'file_keys_backup.txt' # Default
+		SettingsSave()
 
 
 def SettingsSave():
@@ -56,12 +62,14 @@ def SettingsSave():
 	global Backup_key_nonce_setting_value
 	global Load_file_in_ram_value
 	global Keys_Backup_file
+	global Generated_key_in_use_checker_value
 
 	with open('settings.txt','w') as f:
 		f.write('Delete_original_file_checkbox_value :=: ' + str(Delete_original_file_checkbox_value.get()) + '\n')
 		f.write('Backup_key_nonce_setting_value :=: ' + str(Backup_key_nonce_setting_value.get()) + '\n')
 		f.write('Load_file_in_ram_value :=: ' + str(Load_file_in_ram_value.get()) + '\n')
 		f.write('Keys_Backup_file :=: ' + Keys_Backup_file)
+		f.write('Generated_key_in_use_checker_value :=: ' + Generated_key_in_use_checker_value.get())
 
 	Logger('info',"Settings have been saved.")
 
@@ -122,8 +130,19 @@ def Logger(mtype, message):
 
 
 def KeyRandomGenerator():
+	global Keys_Backup_file
+	global Generated_key_in_use_checker_value
 	key_input_encrypt.delete(0,END)
 	key = get_random_bytes(ChangeKeyGenBits.keybytes).hex()
+
+	if Backup_key_nonce_setting_value.get() and Generated_key_in_use_checker_value.get(): # If key will be saved in backup file, check if key is already in use. 
+		try:
+			with open(Keys_Backup_file, 'r') as key_backup_file:
+				while key in key_backup_file:
+					key = get_random_bytes(ChangeKeyGenBits.keybytes).hex()
+		except FileNotFoundError:
+			Logger('error',"[KRG-0] Keys backup file was not found to check if generated key is already in use.")
+
 	key_input_label_encrypt['text'] = "Key (Hex):"
 	key_input_encrypt.insert(0,key)
 	pyperclip.copy(key) # Copy hex key to clickboard
@@ -209,24 +228,23 @@ def Data_Encrypt(key): # Encrypt Data
 		enc_file_hash = hashlib.sha256(Data_Encrypt.enc_bytes).hexdigest()
 
 		if Backup_key_nonce_setting_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
-			with open(Keys_Backup_file, 'a') as enc_file:
+			with open(Keys_Backup_file, 'a') as key_backup_file:
 				try:
 					if '(Bts)' in key_input_label_encrypt['text']:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						enc_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
 					file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
 					if '(Bts)' in key_input_label_encrypt['text']:
-						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						enc_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except Exception as e:
 					Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
 					print(e) # For debug purpose
-			enc_file.close()
 
 
 		Logger('info',"Encryption Finished.")
@@ -251,7 +269,6 @@ def AES_Encrypt(): # AES Encrypt
 		if Load_Type.get() == 1: # If folder has been selected
 			if FolderToZip():
 				return
-
 
 		key = key_input_encrypt.get()
 
@@ -388,7 +405,6 @@ def FileReader(file):
 		Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
 
-
 def FolderToZip():
 	FolderToZip.compression_finished_verification_var = -1
 
@@ -520,6 +536,7 @@ view_main_menu = Menu(settings_menubar)
 view_main_menu.add_command(label="Check for updates", command=UpdateCheck)
 view_main_menu.add_checkbutton(label="Delete original file after encryption/decryption", onvalue=1, offvalue=0, variable=Delete_original_file_checkbox_value)
 view_main_menu.add_checkbutton(label="Store key/nonce in backup file", onvalue=1, offvalue=0, variable=Backup_key_nonce_setting_value)
+view_main_menu.add_checkbutton(label="Check if generated key is already in use", onvalue=1, offvalue=0, variable=Generated_key_in_use_checker_value)
 
 Load_file_in_ram_value = 0
 # view_main_menu.add_checkbutton(label="Load file in RAM", onvalue=1, offvalue=0, variable=Load_file_in_ram_value)
