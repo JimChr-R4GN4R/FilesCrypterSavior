@@ -46,7 +46,7 @@ def DefaultSettingsSetter():
 				option_name, value = line.replace('\n','').split(' :=: ')
 				if option_name == 'Delete_original_file_checkbox_value': Delete_original_file_checkbox_value = IntVar(value=int(value))
 				elif option_name == 'Backup_key_nonce_setting_value': Backup_key_nonce_setting_value = IntVar(value=int(value))
-				elif option_name == 'Load_file_in_ram_value': Load_file_in_ram_value = IntVar(value=int(value))
+				#elif option_name == 'Load_file_in_ram_value': Load_file_in_ram_value = IntVar(value=int(value))
 				elif option_name == 'Keys_Backup_file': Keys_Backup_file = value
 				elif option_name == 'Generated_key_in_use_checker_value': Generated_key_in_use_checker_value = IntVar(value=int(value))
 			except:
