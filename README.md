@@ -41,3 +41,6 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 
 - [ ] Add `BKP` (Basic Key Protector) system which means that user enters a key which he wants and database will be encrypted/decrypted by this key and files' keys and nonces will be generated automatically, so user has just to know only one key to encrypt/decrypt his files.
 
+
+## Disclaimer
+This is a beta version. There will be many updates. If you loose your keys/nonces, then you cannot recover the encrypted files. Your data, your responsibility.
