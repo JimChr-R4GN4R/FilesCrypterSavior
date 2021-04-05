@@ -1,4 +1,4 @@
-FCS_Version = 'V2.7' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.6' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -276,10 +276,10 @@ def Data_Encrypt(filepath,key): # Encrypt Data
 		Logger('info',"Encryption Finished.")
 		Load_Button['text'] = "Load File/Folder"
 		
-	except Exception as e:
+	except ValueError:
 		Logger('error',"[DE-1]")
+	except Exception as e:
 		print(e)
-		print(key)
 
 	Data_Encrypt.enc_bytes = None
 
