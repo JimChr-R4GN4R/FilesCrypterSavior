@@ -37,7 +37,7 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 
 - [X] ~Added key uniqueness verification option.~
 
-- [X] Make possible to choose more than one files at once and encrypt all of them automatically.
+- [X] ~Make possible to choose more than one files at once and encrypt all of them automatically.~
 
 - [ ] ~Add option that you can load data directly to RAM instead of hard disk in case there is not enough disk space.~ (Not stable)
 
