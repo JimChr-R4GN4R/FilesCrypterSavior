@@ -1,4 +1,4 @@
-FCS_Version = 'V2.6' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.8' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -228,7 +228,7 @@ def Data_Encrypt(filepath,key): # Encrypt Data
 		Logger('info',"Encrypting with AES-EAX...")
 		try:
 			Data_Encrypt.enc_bytes = cipher.encrypt( pad(FileReader.data,16) ) # Fix file bytes length | Encrypting...
-			FileReader.data = None
+			VarsEraser([FileReader.data])
 			if Load_file_in_ram_value == 1:
 				try:
 					WriteFileFromRAM(filepath + '.fcsenc')
@@ -251,27 +251,27 @@ def Data_Encrypt(filepath,key): # Encrypt Data
 			except PermissionError:
 				Logger('error', "[DE-0]")
 
-		enc_file_hash = FileSha256Hasher(Data_Encrypt.enc_bytes)
+		Data_Encrypt.enc_file_hash = FileSha256Hasher(Data_Encrypt.enc_bytes)
 
 		if Backup_key_nonce_setting_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
 			with open(Keys_Backup_file, 'a') as key_backup_file:
 				try:
 					if '(Bts)' in key_input_label_encrypt['text']:
-						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + Data_Encrypt.enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + Data_Encrypt.enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except UnicodeEncodeError: # If filepath has unicodes like \u202a, remove them and save decoded filename in db
 					file = "".join([char for char in filepath if ord(char) < 128])
 					if '(Bts)' in key_input_label_encrypt['text']:
-						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + Data_Encrypt.enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + Data_Encrypt.enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
+					
 				except Exception as e:
 					Logger('error',"[DE-2]")
 					print(e) # For debug purpose
-
 
 		Logger('info',"Encryption Finished.")
 		Load_Button['text'] = "Load File/Folder"
@@ -280,6 +280,8 @@ def Data_Encrypt(filepath,key): # Encrypt Data
 		Logger('error',"[DE-1]")
 	except Exception as e:
 		print(e)
+	finally:
+		VarsEraser([filepath,Data_Encrypt.enc_file_hash])
 
 	Data_Encrypt.enc_bytes = None
 
@@ -573,8 +575,9 @@ def QuickDecryptChecker(file_hash): # Check if encrypted file is in Keys Backup 
 					break
 
 
-
-
+def VarsEraser(vars):
+	for i in vars:
+		i = None
 
 
 
