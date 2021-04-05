@@ -1,4 +1,4 @@
-FCS_Version = 'V2.6' # DON'T REMOVE OR MOVE THIS LINE
+FCS_Version = 'V2.7' # DON'T REMOVE OR MOVE THIS LINE
 
 from tkinter import *
 from tkinter import messagebox
@@ -18,12 +18,37 @@ import mmap
 from sys import platform
 
 
+ERRORS = {
+	'[UC-0]':"Please check back later or contact with R4GN4R. Probably there is an update on the way!",
+	'[UC-1]':"Please check your internet connection.",
+	'[UC-2]':"HTTP Error.",
+	'[UC-3]':"Error Connecting.",
+	'[UC-4]':"Timeout Error.",
+	'[KRG-0]':"Keys backup file was not found to check if generated key is already in use.",
+	'[DE-0]':"FCS does not have permission to delete original folder. (Encryption Continues)",
+	'[DE-1]':"Encryption Failed. Please check your key's length and value.",
+	'[DE-2]':"There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.",
+	'[DE-3]':"File could not be encrypted, cause of not enough memory. (Encryption Stopped)",
+	'[DE-4]':"There is no file with this name.",
+	'[AE-1]':"File doesn't exist.",
+	'[AD-1]':"Key's hex value is incorrect.",
+	'[AD-2]':"Nonce's hex value is incorrect.",
+	'[AD-3]':"Key or Nonce is not correct.",
+	'[AD-4]':"Key or Nonce is not correct.",
+	'[AD-5]':"File doesn't exist.",
+	'[FR-1]':"File wasn't found. (Encryption/Decryption Stopped)",
+	'[FR-2]':"Zipped file could not be read, cause of not enough memory. (Encryption Stopped)",
+	'[FR-3]':"File could not be read, cause of not enough memory. (Encryption Stopped)",
+	'[FTZ-0]':"FCS does not have permission to delete original folder. (Encryption Continues)",
+	'[FTZ-1]':"There is no folder with this address. (Encryption Stopped)"
+}
+
+
 ###--- Methods ---###
 
 
-
 def DefaultSettingsSetter():
-	ChangeKeyGenBits.keybytes = 128//8 # Default generate key bytes length
+	ChangeKeyGenBits.keybytes = 256//8 # Default generate key bytes length
 	LoadFile.filepath = "-" # Default filepath which does not exist
 
 	global Delete_original_file_checkbox_value
@@ -60,7 +85,7 @@ def DefaultSettingsSetter():
 def SettingsSave():
 	global Delete_original_file_checkbox_value
 	global Backup_key_nonce_setting_value
-	global Load_file_in_ram_value
+	# global Load_file_in_ram_value
 	global Keys_Backup_file
 	global Generated_key_in_use_checker_value
 
@@ -90,17 +115,17 @@ def UpdateCheck():
 			else:
 				Logger('info',"You are up to date.")
 		except ValueError:
-			Logger('error',"Please check back later or contact with R4GN4R. Probably there is an update on the way!")
+			Logger('error',"[UC-0]")
 
 
 	except requests.exceptions.RequestException:
-		Logger('error',"[UC-1] Please check your internet connection.")
+		Logger('error',"[UC-1]")
 	except requests.exceptions.HTTPError:
-		Logger('error',"[UC-2] Http Error.")
+		Logger('error',"[UC-2]")
 	except requests.exceptions.ConnectionError:
-		Logger('error',"[UC-3] Error Connecting.")
+		Logger('error',"[UC-3]")
 	except requests.exceptions.Timeout:
-		Logger('error',"[UC-4] Timeout Error.")   
+		Logger('error',"[UC-4]")   
 
 
 def ImportKeysBackupFile():
@@ -122,7 +147,7 @@ def Logger(mtype, message):
 	elif mtype =='imp':
 		message = '[Important] - ' + message
 	elif mtype =='error':
-		message = '[Error] - ' + message
+		message = '[Error] - ' + message + ' ' + ERRORS[message]
 	message += '\n'
 
 	Logging_window.insert(INSERT, message)
@@ -141,7 +166,7 @@ def KeyRandomGenerator():
 				while key in key_backup_file:
 					key = get_random_bytes(ChangeKeyGenBits.keybytes).hex()
 		except FileNotFoundError:
-			Logger('error',"[KRG-0] Keys backup file was not found to check if generated key is already in use.")
+			Logger('error',"[KRG-0]")
 
 	key_input_label_encrypt['text'] = "Key (Hex):"
 	key_input_encrypt.insert(0,key)
@@ -196,7 +221,7 @@ def DecryptKeyBytesHexFormat(event=None):
 			key_input_label_decrypt['text'] = "Key (Hex):"
 
 
-def Data_Encrypt(key): # Encrypt Data
+def Data_Encrypt(filepath,key): # Encrypt Data
 	try:
 		cipher = AES.new(key, AES.MODE_EAX)
 		nonce = cipher.nonce ; Logger( 'imp',"Nonce (hex): " + nonce.hex() ) # sign nonce
@@ -206,54 +231,55 @@ def Data_Encrypt(key): # Encrypt Data
 			FileReader.data = None
 			if Load_file_in_ram_value == 1:
 				try:
-					WriteFileFromRAM(LoadFile.filepath + '.fcsenc')
+					WriteFileFromRAM(filepath + '.fcsenc')
 				except ValueError:
-					Logger('error',"[DE-4] There is no file with this name.")
+					Logger('error',"[DE-4]")
 					return
 
 			else:
-				enc_file = open(LoadFile.filepath + '.fcsenc', 'wb') # Make new enc_file
+				enc_file = open(filepath + '.fcsenc', 'wb') # Make new enc_file
 				enc_file.write(Data_Encrypt.enc_bytes) # Write encrypted bytes in enc_file 
 				enc_file.close()
 		except MemoryError:
-			Logger('error',"[DE-3] File could not be encrypted, cause of not enough memory. (Encryption Stopped)")
+			Logger('error',"[DE-3]")
 			return
 
 		if Delete_original_file_checkbox_value.get():
 			try:
-				os.remove(LoadFile.filepath) # delete original file
+				os.remove(filepath) # delete original file
 				Logger('info',"Original file has been deleted.")
 			except PermissionError:
-				Logger('error', "[DE-0] FCS does not have permission to delete original folder. (Encryption Continues)")
+				Logger('error', "[DE-0]")
 
-		enc_file_hash = hashlib.sha256(Data_Encrypt.enc_bytes).hexdigest()
+		enc_file_hash = FileSha256Hasher(Data_Encrypt.enc_bytes)
 
 		if Backup_key_nonce_setting_value.get(): # Option Backup key and nonce to file_keys_backup.txt enabled
 			with open(Keys_Backup_file, 'a') as key_backup_file:
 				try:
 					if '(Bts)' in key_input_label_encrypt['text']:
-						key_backup_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
-						key_backup_file.write(LoadFile.filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
+						key_backup_file.write(filepath + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
-				except UnicodeEncodeError: # If LoadFile.filepath has unicodes like \u202a, remove them and save decoded filename in db
-					file = "".join([char for char in LoadFile.filepath if ord(char) < 128])
+				except UnicodeEncodeError: # If filepath has unicodes like \u202a, remove them and save decoded filename in db
+					file = "".join([char for char in filepath if ord(char) < 128])
 					if '(Bts)' in key_input_label_encrypt['text']:
 						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Bts): "+unpad(key,16).decode('utf-8') + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					else:
 						key_backup_file.write(file + '.fcsenc' + ' | Hash256: ' + enc_file_hash + " | Key (Hex): " + key.hex() + " | " + "Nonce (Hex): " + nonce.hex() + '\n')
 					Logger('info',"Key/Nonce have been added in the Keys Backup file.")
 				except Exception as e:
-					Logger('error',"[DE-2] There was an error occured when tried to save key and nonce in databse. Please copy them and save them by hand in a safe place.")
+					Logger('error',"[DE-2]")
 					print(e) # For debug purpose
 
 
 		Logger('info',"Encryption Finished.")
 		Load_Button['text'] = "Load File/Folder"
 		
-	except ValueError:
-		Logger('error',"[DE-1] Encryption Failed. Please check your key's length and value.")
+	except Exception as e:
+		Logger('error',"[DE-1]")
 		print(e)
+		print(key)
 
 	Data_Encrypt.enc_bytes = None
 
@@ -265,35 +291,27 @@ def AES_Encrypt(): # AES Encrypt
 		return
 
 
-	elif path.exists(LoadFile.filepath): # file exists
-
-		if Load_Type.get() == 1: # If folder has been selected
-			if FolderToZip():
-				return
-
-		key = key_input_encrypt.get()
-
-		if len(key) > 0:
-
-			if "Hex" in key_input_label_encrypt['text']:
-
-				try:
-					key = bytes.fromhex(key)
-
-				except ValueError:
-					Logger('warn',"Key's hex value is incorrect.")
+	elif R1['text'] == 'File':
+		if path.exists(LoadFile.filepath): # file exists
+			if Load_Type.get() == 1: # If folder has been selected
+				if FolderToZip():
 					return
 
+			key = key_input_encrypt.get()
+			if len(key) > 0:
+				if "Hex" in key_input_label_encrypt['text']:
+					try:
+						key = bytes.fromhex(key)
+					except ValueError:
+						Logger('warn',"Key's hex value is incorrect.")
+						return
+				else:
+					key = pad(key.encode(),16)
+				Data_Encrypt(LoadFile.filepath,key)
 			else:
-				key = pad(key.encode(),16)
-
-			Data_Encrypt(key)
-
+				Logger('warn',"Please add a key.")
 		else:
-			
-			Logger('warn',"Please add a key.")
-	else:
-		Logger('error',"[AE-1] File doesn't exist.")
+			Logger('error',"[AE-1]")
 
 
 def AES_Decrypt(): # AES Decrypt
@@ -302,6 +320,7 @@ def AES_Decrypt(): # AES Decrypt
 		Logger('warn',"Please select a file to decrypt.")
 
 	elif path.exists(LoadFile.filepath): # file exists
+		FileSha256Hasher(FileReader.data)
 		key = key_input_decrypt.get()
 		nonce = Nonce_input_decrypt.get()
 
@@ -312,7 +331,7 @@ def AES_Decrypt(): # AES Decrypt
 				try: # unhex key
 					key = bytes.fromhex(key)
 				except ValueError:
-					Logger('error',"[AD-1] Key's hex value is incorrect.")
+					Logger('error',"[AD-1]")
 					return
 			else:
 				key = pad(key.encode(),16)
@@ -320,7 +339,7 @@ def AES_Decrypt(): # AES Decrypt
 			try: # unhex nonce
 				nonce = bytes.fromhex(nonce)
 			except ValueError:
-				Logger('error',"[AD-2] Nonce's hex value is incorrect.")
+				Logger('error',"[AD-2]")
 				return
 			
 			if len(key) > 32:
@@ -361,16 +380,16 @@ def AES_Decrypt(): # AES Decrypt
 						Logger('info',"There wasn't found any key/nonce Keys Backup file to remove specific information. (Not Important)")
 
 				except ValueError:
-					Logger('error',"[AD-3] Key or Nonce is not correct.")
+					Logger('error',"[AD-3]")
 
 			except ValueError:
-				Logger('error',"[AD-4] Key or Nonce is not correct.")
+				Logger('error',"[AD-4]")
 
 		else:
 			Logger('warn',"Please fill Key and Nonce.")
 
 	else:
-		Logger('error',"[AD-5] File doesn't exist.")
+		Logger('error',"[AD-5]")
 
 
 def FileReader(file):
@@ -380,32 +399,30 @@ def FileReader(file):
 			try:
 				LoadFileToRAM(file)
 			except ValueError:
-				Logger('error',"[DE-4] There is no file with this name.")
+				Logger('error',"[FR-0] There is no file with this name.")
 				return
-
 		else:
 			try:
 				FileReader.data = open(file, 'rb').read() # import data from file.txt
+				FileReader.file_hash = FileSha256Hasher(FileReader.data) # get it's sha256
 			except FileNotFoundError:
-				Logger('error',"[FR-1] File wasn't found. (Encryption/Decryption Stopped)")
+				Logger('error',"[FR-1]")
 				return
 			except MemoryError:
 				if FolderToZip.compression_finished_verification_var != -1:
-					Logger('error',"[FR-2] Zipped file could not be read, cause of not enough memory. (Encryption Stopped)")
+					Logger('error',"[FR-2]")
+					return
 					if FolderToZip.compression_finished_verification_var == 0:
 						Logger('info',"Please make some space and encrypt the zip file manually.")
+						return
 				else:
-					Logger('error',"[FR-3] File could not be read, cause of not enough memory. (Encryption Stopped)")
+					Logger('error',"[FR-3]")
+					return
 
 		Logger('info',"Loading Completed.")
 
-		if LoadFile.name_filename[-7:] == '.fcsenc': # If the file is encrypted, then check the Keys Backup file if it's recorded
-			QuickDecryptChecker()
-
-		if len(LoadFile.full_filename_path) > 47:
-			LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
-
-		Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
+		if LoadFile.name_filename[-7:] == '.fcsenc' and R1['text'] == 'File' : # If the file is encrypted, then check the Keys Backup file if it's saved
+			QuickDecryptChecker(FileReader.file_hash)
 
 
 def FolderToZip():
@@ -418,7 +435,7 @@ def FolderToZip():
 		Logger('info', "Compression Finished.")
 		FolderToZip.compression_finished_verification_var = 0
 	except FileNotFoundError:
-		Logger( 'error', f"There is no folder with that address: '{LoadFile.filepath}' (Encryption Stopped)")
+		Logger( 'error', f"[FTZ-1]")
 		FolderToZip.compression_finished_verification_var = 1
 		return 1
 
@@ -426,31 +443,31 @@ def FolderToZip():
 		os.remove(LoadFile.filepath) # Delete original folder which got compressed
 		Logger('info',"Original file has been deleted.")
 	except PermissionError:
-		Logger('error', "[FTZ-0] FCS does not have permission to delete original folder. (Encryption Continues)")
+		Logger('error', "[FTZ-0]")
 
 	LoadFile.filepath = LoadFile.filepath + '.fcsfolder.zip'
 	FileReader(LoadFile.filepath)
 
 
-def LoadFileToRAM(file):
-	if platform == "linux":
-		with open(file, 'rb') as f:
-			FileReader.data = ( mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ) ).read()
+# def LoadFileToRAM(file):
+# 	if platform == "linux":
+# 		with open(file, 'rb') as f:
+# 			FileReader.data = ( mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ) ).read()
 
-	elif (platform == "win32") or (platform == "cygwin"):
-		with open(file, 'rb') as f:
-			FileReader.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
+# 	elif (platform == "win32") or (platform == "cygwin"):
+# 		with open(file, 'rb') as f:
+# 			FileReader.data = ( mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) ).read()
 
 
-def WriteFileFromRAM(file):
-	try:
-		with open(file, 'wb') as enc_file:
-			if platform == "linux":
-				mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
-			elif (platform == "win32") or (platform == "cygwin"):
-				mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
-	except Exception as e:
-		print(e)
+# def WriteFileFromRAM(file):
+# 	try:
+# 		with open(file, 'wb') as enc_file:
+# 			if platform == "linux":
+# 				mmap.mmap(enc_file.fileno(), 0, prot=mmap.PROT_WRITE)
+# 			elif (platform == "win32") or (platform == "cygwin"):
+# 				mmap.mmap(enc_file.fileno(), 0, access=mmap.ACCESS_WRITE)
+# 	except Exception as e:
+# 		print(e)
 
 def LoadFile():
 
@@ -460,27 +477,81 @@ def LoadFile():
 			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_folder_addr) # address of directories | filename.*
 			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
 			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+			InputsButtonsSwitcher( [AES_encrypt_random_key_generator_button,key_input_encrypt], 'normal' )
 			if len(LoadFile.full_filename_path) > 47:
 				LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
 
 			Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
 	else: # Load_Type is file
+		LoadFile.Load_filename_addr = filedialog.askopenfilenames(parent=gui, title='Choose File(s)', filetypes=[("All Files", "*.*")])
+		if LoadFile.Load_filename_addr: # If user selected at least 1
+			if len(LoadFile.Load_filename_addr) == 1:
+				R1['text'] = "File"
+				AES_encrypt_button['command'] = AES_Encrypt
+				LoadFile.Load_filename_addr = LoadFile.Load_filename_addr[0]
+				FileAddressFixer(LoadFile.Load_filename_addr)
+				FileReader(LoadFile.filepath)
+				InputsButtonsSwitcher( [AES_encrypt_random_key_generator_button,key_input_encrypt], 'normal' )
+				
+				if len(LoadFile.full_filename_path) > 47:
+					LoadFile.full_filename_path = LoadFile.full_filename_path[:25]+".../..."+LoadFile.full_filename_path[len(LoadFile.full_filename_path)-20:]
 
-		LoadFile.Load_filename_addr = filedialog.askopenfilename(title="Select A File", filetypes=[("All Files", "*.*")] )
+				Load_Button['text'] = LoadFile.full_filename_path # Update LoadFile Button text with loaded file path
 
-		if LoadFile.Load_filename_addr: # If user has selected a file
-			LoadFile.addr_filename, LoadFile.name_filename = os.path.split(LoadFile.Load_filename_addr) # address of directories | filename.*
-			LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
-			LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+			else: # If user wants to choose more than one files
+				R1['text'] = "Files"
+				AES_encrypt_button['command'] = ManyFilesEncrypt
+				Logger('info',f"You have chosen: {LoadFile.Load_filename_addr}" )
+				Load_Button['text'] = "Selected {} files".format(len(LoadFile.Load_filename_addr))
+				key_input_encrypt.delete(0,END)
+				InputsButtonsSwitcher( [AES_encrypt_random_key_generator_button,key_input_encrypt], 'disable' ) # disable specific objects
+				FileAddressFixer(LoadFile.Load_filename_addr)
 
-			FileReader(LoadFile.filepath)
+
+def ManyFilesEncrypt():
+	key_input_label_encrypt['text'] = 'Key (Hex):'
+	for i in range(len(LoadFile.filepath)):
+		Logger('info',f"Encrypting {LoadFile.name_filename[i]}")
+		FileReader(LoadFile.filepath[i])
+		key = bytes.fromhex(get_random_bytes(ChangeKeyGenBits.keybytes).hex())
+		Data_Encrypt(LoadFile.filepath[i],key)
 
 
-def QuickDecryptChecker(): # Check if encrypted file is in Keys Backup file
+def InputsButtonsSwitcher(objects,state):
+	for cur_obj in objects:
+		cur_obj['state'] = state
 
+
+def FileAddressFixer(Load_filename_addr):
+	if isinstance(Load_filename_addr,str): # If Load_filename_addr is string (so only 1 file has been chosen)
+		LoadFile.addr_filename, LoadFile.name_filename = os.path.split(Load_filename_addr) # address of directories | filename.*
+		LoadFile.full_filename_path = LoadFile.addr_filename + "/" + LoadFile.name_filename # example/test/file.txt
+		LoadFile.filepath = os.path.join(LoadFile.addr_filename, LoadFile.name_filename) # fix filepath format
+		
+
+	else: # If Load_filename_addr is list (so more than 1 files have been chosen)
+		LoadFile.addr_filename = []
+		LoadFile.name_filename = []
+		LoadFile.full_filename_path = []
+		LoadFile.filepath = []
+		
+
+		for i in range(len(Load_filename_addr)):
+			LoadFile.addr_filename.append(os.path.split(Load_filename_addr[i])[0]) # address of directories
+			LoadFile.name_filename.append(os.path.split(Load_filename_addr[i])[1]) # filename.*
+
+			LoadFile.full_filename_path.append(LoadFile.addr_filename[i] + "/" + LoadFile.name_filename[i]) # example/test/file.txt
+			LoadFile.filepath.append(os.path.join(LoadFile.addr_filename[i], LoadFile.name_filename[i])) # fix filepath format
+
+
+def FileSha256Hasher(file):
+	file_hash = hashlib.sha256(file).hexdigest()
+	return file_hash
+
+
+def QuickDecryptChecker(file_hash): # Check if encrypted file is in Keys Backup file
 	if path.exists(Keys_Backup_file):
-		file_hash = hashlib.sha256(FileReader.data).hexdigest()
 
 		with open(Keys_Backup_file,'r') as f:
 			for line in f.readlines():
@@ -601,13 +672,13 @@ key_input_encrypt.grid(row=row_num, column=1, padx=5, pady=40)
 ###___ Key Input ___###
 
 ###--- Generate Key Button ---###
-AES_encrypt_random_key_generator_button = Button(gui, text ="Generate 128bits Key (Hex)", height=2, padx=5, fg="green2", bg="black", command=KeyRandomGenerator)
+AES_encrypt_random_key_generator_button = Button(gui, text ="Generate 256bits Key (Hex)", height=2, padx=5, fg="green2", bg="black", command=KeyRandomGenerator)
 AES_encrypt_random_key_generator_button.grid(row=row_num, column=2, rowspan=2, sticky=W)
 AES_encrypt_random_key_generator_button.bind("<Button-3>", ChangeKeyGenBits)
 ###___ Generate Key Button ___###
 
-AES_encrypt_button = Button(gui, text ="AES Encrypt", height=2, padx=5, fg="green2", bg="black", command=AES_Encrypt).grid(row=row_num, column=3, rowspan=2, sticky=W) #AES Encrypt Button
-
+AES_encrypt_button = Button(gui, text ="AES Encrypt", height=2, padx=5, fg="green2", bg="black", command=AES_Encrypt) #AES Encrypt Button
+AES_encrypt_button.grid(row=row_num, column=3, rowspan=2, sticky=W)
 
 ####___ AES Encrypt ___####
 
