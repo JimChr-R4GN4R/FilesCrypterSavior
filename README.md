@@ -3,6 +3,9 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 ![image](https://user-images.githubusercontent.com/59511698/110950390-76463d80-834c-11eb-87c3-3d1cf2b72d1e.png)
 
 
+## WARNING
+Don't encrypt files that are more than 64 GB!
+
 ### Tested On
 - Windows 10 with Python 3.8.8
 - Parrot Linux with Python 3.9.1
