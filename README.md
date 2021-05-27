@@ -1,5 +1,5 @@
 # New version is coming soon with many new features!
-- Encrypt/Decrypt big files up to 64GB without any crash as like this version.
+- Encrypt/Decrypt big files up to 64GB without any temporary crash as like this version.
 - Add AES GCM mode.
 - etc.
 
