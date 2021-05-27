@@ -1,3 +1,8 @@
+# New version is coming soon with many new features!
+- Encrypt/Decrypt big files up to 64GB without any crash as like this version.
+- Add AES GCM mode.
+- etc.
+
 # FilesCrypterSavior
 This is a GUI program based on Python3 which helps you encrypt and decrypt files and folders with AES-EAX.
 ![image](https://user-images.githubusercontent.com/59511698/110950390-76463d80-834c-11eb-87c3-3d1cf2b72d1e.png)
