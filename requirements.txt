@@ -1,4 +1,0 @@
-pyperclip
-requests
-Pillow
-pycryptodome
