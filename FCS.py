@@ -1,6 +1,4 @@
 FCS_Version = 3.0 # DON'T REMOVE OR MOVE THIS LINE
-Notification = None
-
 
 import os
 from os import path
@@ -635,17 +633,12 @@ class UI(QMainWindow):
 
 		try:
 			try:
-				url_response = requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FilesCrypterSavior.py").text.split('\n')
+				url_response = requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FCS.py").text.split('\n')
 				latest_version = float( url_response[0].split(' ')[2] )
 				Notification = url_response[1].split(' ',2)[2]
 
-				if latest_version > cur_version:
+				if latest_version > FCS_Version:
 					Logger('info',"There is a newer version! Please update FCS.")
-
-				if Notification != 'None':
-					Logger('info',Notification)
-					import webbrowser
-					webbrowser.open_new('https://github.com/JimChr-R4GN4R/FilesCrypterSavior')
 					
 				else:
 					Logger('info',"You are up to date.")
