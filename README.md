@@ -1,53 +1,53 @@
-# New version is coming soon with many new features!
-- Encrypt/Decrypt big files up to 64GB without any temporary crash as like this version.
-- Add AES GCM mode.
-- etc.
-
 # FilesCrypterSavior
 This is a GUI program based on Python3 which helps you encrypt and decrypt files and folders with AES-EAX.
 ![image](https://user-images.githubusercontent.com/59511698/110950390-76463d80-834c-11eb-87c3-3d1cf2b72d1e.png)
 
 
-## WARNING
-Don't encrypt files that are more than 64 GB!
-
 ### Tested On
-- Windows 10 with Python 3.8.8
-- Parrot Linux with Python 3.9.1
+- Windows 10 (Python 3.8.0/3.8.8/3.8.10 and .exe)
+- Windows 8.1 (exe)
+- Parrot Linux (Python 3.9.1)
 
+## Warning
+FCS Version 3.0+ does not support Database files from previous versions. So you may keep the FCS V2.X and decrypt the files you have already encrypted, or just put manually keys and nonces in FCS newest version (Make sure you have selected `AES-EAX` encryption mdoe.)
 
 ## Preparation
-- Make sure you support Python 3.X .
 - Download the project: `git clone https://github.com/JimChr-R4GN4R/FilesCrypterSavior`
+- Try to run `FCS.exe` . If it does not open properly, then follow these steps to run it with python3:
+- Make sure you support Python 3.X (in case .exe file is not running).
 - Then install all required packages by typing in terminal (or cmd):
 `python3 -m pip install -r requirements.txt`
-
-
 - Then get in FilesCrypterSavior's folder and type:
-`python3 FilesCrypterSavior.py`
-
+`python3 FCS.py`
 - Done!
 
+
+## Instructions
+FCS Files:
+![image](https://user-images.githubusercontent.com/59511698/123560523-5f1c4600-d7ab-11eb-86be-0232961d1424.png)
+
+FCS Main Window:
+![image](https://user-images.githubusercontent.com/59511698/123560662-58420300-d7ac-11eb-9c79-0a6953080d4c.png)
+
+FCS Menu (I recommend you to keep default options):
+![image](https://user-images.githubusercontent.com/59511698/123560753-e1593a00-d7ac-11eb-8345-bf9eaa41faa2.png)
+![image](https://user-images.githubusercontent.com/59511698/123560805-42810d80-d7ad-11eb-9540-1c811f960ae9.png)
+
+
 ## Presentation
-[Presentation Video](https://www.youtube.com/watch?v=K3w5Q58m8UA)
+[Presentation Video](https://www.youtube.com/watch?v=K3w5Q58m8UA) (Outdated)
 
 
 ## To-Do List
 - [X] ~Add `Auto fill Key&Nonce` that checks if the file you want to decrypt exists in database, so it gets key and nonce and fills them in their input automatically.~
 
-
 - [X] ~Add `Update Checker` option.~
-
-
-- [X] ~When selecting a folder instead of file, zip it and then encrypt it.~ (It's recommended not to encrypt files more than ~3GB at once if there is not enough space and RAM)
 
 - [X] ~Make save options feature.~
 
 - [X] ~Added key uniqueness verification option.~
 
 - [X] ~Make possible to choose more than one files at once and encrypt all of them automatically.~
-
-- [ ] ~Add option that you can load data directly to RAM instead of hard disk in case there is not enough disk space.~ (Not stable)
 
 - [ ] Add `BKP` (Basic Key Protector) system which means that user enters a key which he wants and database will be encrypted/decrypted by this key and files' keys and nonces will be generated automatically, so user has just to know only one key to encrypt/decrypt his files.
 
