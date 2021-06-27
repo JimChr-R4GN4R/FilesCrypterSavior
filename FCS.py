@@ -2,7 +2,6 @@ FCS_Version = 3.0 # DON'T REMOVE OR MOVE THIS LINE
 
 import os
 from os import path
-from colorama import Fore, Back, Style
 import json
 
 import hashlib
