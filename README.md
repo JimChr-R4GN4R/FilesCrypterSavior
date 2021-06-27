@@ -1,6 +1,6 @@
 # FilesCrypterSavior
 This is a GUI program based on Python3 which helps you encrypt and decrypt files and folders with AES-EAX.
-![image](https://user-images.githubusercontent.com/59511698/110950390-76463d80-834c-11eb-87c3-3d1cf2b72d1e.png)
+![image](https://user-images.githubusercontent.com/59511698/123561447-064fac00-d7b1-11eb-9241-9396c1d621d5.png)
 
 
 ### Tested On
@@ -24,12 +24,15 @@ FCS Version 3.0+ does not support Database files from previous versions. So you 
 
 ## Instructions
 FCS Files:
+
 ![image](https://user-images.githubusercontent.com/59511698/123560523-5f1c4600-d7ab-11eb-86be-0232961d1424.png)
 
 FCS Main Window:
+
 ![image](https://user-images.githubusercontent.com/59511698/123560662-58420300-d7ac-11eb-9c79-0a6953080d4c.png)
 
 FCS Menu (I recommend you to keep default options):
+
 ![image](https://user-images.githubusercontent.com/59511698/123560753-e1593a00-d7ac-11eb-8345-bf9eaa41faa2.png)
 ![image](https://user-images.githubusercontent.com/59511698/123560805-42810d80-d7ad-11eb-9540-1c811f960ae9.png)
 
