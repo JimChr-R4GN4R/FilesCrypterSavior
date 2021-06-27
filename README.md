@@ -1,6 +1,7 @@
 # FilesCrypterSavior
 This is a GUI program based on Python3 which helps you encrypt and decrypt files and folders with AES-EAX.
-![image](https://user-images.githubusercontent.com/59511698/123561447-064fac00-d7b1-11eb-9241-9396c1d621d5.png)
+![image](https://user-images.githubusercontent.com/59511698/123561795-3304c300-d7b3-11eb-8cb7-ca295dba075a.png)
+
 
 
 ### Tested On
