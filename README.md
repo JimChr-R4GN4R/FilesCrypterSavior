@@ -6,7 +6,7 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 
 
 ### Tested On
-- Windows 10 (Python 3.8.0/3.8.8/3.8.10 and .exe)
+- Windows 10 (Python 3.8.0/3.8.8/3.8.10 and exe)
 - Windows 8.1 (exe)
 - Parrot Linux (Python 3.9.1)
 
