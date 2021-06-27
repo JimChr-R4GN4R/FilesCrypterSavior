@@ -635,7 +635,6 @@ class UI(QMainWindow):
 			try:
 				url_response = requests.get("https://raw.githubusercontent.com/JimChr-R4GN4R/FilesCrypterSavior/main/FCS.py").text.split('\n')
 				latest_version = float( url_response[0].split(' ')[2] )
-				Notification = url_response[1].split(' ',2)[2]
 
 				if latest_version > FCS_Version:
 					Logger('info',"There is a newer version! Please update FCS.")
