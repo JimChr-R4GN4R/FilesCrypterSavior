@@ -41,7 +41,7 @@
       <x>20</x>
       <y>190</y>
       <width>461</width>
-      <height>118</height>
+      <height>91</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="encrypt_form">
@@ -181,9 +181,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>360</y>
+      <y>330</y>
       <width>461</width>
-      <height>87</height>
+      <height>111</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="decrypt_form">
@@ -193,28 +193,6 @@
      <property name="verticalSpacing">
       <number>0</number>
      </property>
-     <item row="2" column="1" colspan="2">
-      <widget class="QLineEdit" name="dec_nonce_input">
-       <property name="placeholderText">
-        <string>Type your nonce in Hex format (example: 736563726574313233)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1" colspan="2">
-      <widget class="QPushButton" name="dec_button">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Decrypt</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="dec_nonce_label">
        <property name="sizePolicy">
@@ -240,6 +218,21 @@
        </property>
       </widget>
      </item>
+     <item row="3" column="1" colspan="2">
+      <widget class="QPushButton" name="dec_button">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Decrypt</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="dec_key_label">
        <property name="sizePolicy">
@@ -255,6 +248,13 @@
        </property>
        <property name="text">
         <string>Key (H):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="QLineEdit" name="dec_nonce_input">
+       <property name="placeholderText">
+        <string>Type your nonce in Hex format (example: 736563726574313233)</string>
        </property>
       </widget>
      </item>
@@ -329,7 +329,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>330</y>
+      <y>300</y>
       <width>71</width>
       <height>21</height>
      </rect>
@@ -400,7 +400,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>320</y>
+      <y>290</y>
       <width>461</width>
       <height>16</height>
      </rect>
