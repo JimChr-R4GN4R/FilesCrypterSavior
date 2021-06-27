@@ -13,7 +13,7 @@ FCS Version 3.0+ does not support Database files from previous versions. So you 
 
 ## Preparation
 - Download the project: `git clone https://github.com/JimChr-R4GN4R/FilesCrypterSavior`
-- Try to run `FCS.exe` . If it does not open properly, then follow these steps to run it with python3:
+- Try to run `FCSx64.exe` . If it does not open properly, then follow these steps to run it with python3:
 - Make sure you support Python 3.X (in case .exe file is not running).
 - Then install all required packages by typing in terminal (or cmd):
 `python3 -m pip install -r requirements.txt`
