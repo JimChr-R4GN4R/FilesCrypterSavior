@@ -11,7 +11,7 @@ This is a GUI program based on Python3 which helps you encrypt and decrypt files
 - Parrot Linux (Python 3.9.1)
 
 ## Warning
-FCS Version 3.0+ does not support Database files from previous versions. So you may keep the FCS V2.X and decrypt the files you have already encrypted, or just put manually keys and nonces in FCS newest version (Make sure you have selected `AES-EAX` encryption mdoe.)
+FCS Version 3.0+ does not support Database files from previous versions. So you may keep the FCS V2.X and decrypt the files you have already encrypted, or just put manually keys and nonces in FCS newest version (Make sure you have selected `AES-EAX` encryption mode.)
 
 ## Preparation
 - Download the project: `git clone https://github.com/JimChr-R4GN4R/FilesCrypterSavior`
