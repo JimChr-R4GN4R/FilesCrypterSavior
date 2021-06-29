@@ -33,6 +33,8 @@ FCS Main Window:
 
 ![image](https://user-images.githubusercontent.com/59511698/123560662-58420300-d7ac-11eb-9c79-0a6953080d4c.png)
 
+If you load a file, if no key entered, it will be automaticcaly generated.
+
 FCS Menu (I recommend you to keep default options):
 
 ![image](https://user-images.githubusercontent.com/59511698/123560753-e1593a00-d7ac-11eb-8345-bf9eaa41faa2.png)
