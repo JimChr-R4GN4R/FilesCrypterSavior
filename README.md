@@ -21,6 +21,7 @@ FCS Version 3.0+ does not support Database files from previous versions. So you 
 `python3 -m pip install -r requirements.txt`
 - Then get in FilesCrypterSavior's folder and type:
 `python3 FCS.py`
+- Recommend to create a DB file via `DB settings` before start encrypting files.
 - Done!
 
 
