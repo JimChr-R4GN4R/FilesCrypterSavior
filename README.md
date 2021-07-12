@@ -31,7 +31,9 @@ FCS Files:
 ![image](https://user-images.githubusercontent.com/59511698/123560523-5f1c4600-d7ab-11eb-86be-0232961d1424.png)
 
 FCS Main Window:
-(If encrypt key input is empty, it will generate one)
+
+(If encrypt key input is empty, it will be randomly generated)
+
 ![image](https://user-images.githubusercontent.com/59511698/123560662-58420300-d7ac-11eb-9c79-0a6953080d4c.png)
 
 If you load a file, if no key entered, it will be automaticcaly generated.
