@@ -32,7 +32,7 @@ FCS Files:
 
 FCS Main Window:
 
-(If encrypt key input is empty, it will be randomly generated)
+(If encrypt key input is empty, it will be generated automatically)
 
 ![image](https://user-images.githubusercontent.com/59511698/123560662-58420300-d7ac-11eb-9c79-0a6953080d4c.png)
 
