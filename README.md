@@ -59,6 +59,8 @@ FCS Menu (I recommend you to keep default options):
 
 - [X] ~Make possible to choose more than one files at once and encrypt all of them automatically.~
 
+- [ ] Add more encryption systems like XChaCha20-Poly1305 etc.
+
 - [ ] Add `BKP` (Basic Key Protector) system which means that user enters a key which he wants and database will be encrypted/decrypted by this key and files' keys and nonces will be generated automatically, so user has just to know only one key to encrypt/decrypt his files.
 
 
